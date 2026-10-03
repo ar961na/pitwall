@@ -1,11 +1,9 @@
-"""Corner-by-corner analysis — TASK 1 (docs/tasks/01-corner-analysis.md).
+"""Corner-by-corner analysis (TASK 1, docs/tasks/01-corner-analysis.md).
 
 Corner positions come from the MultiViewer circuit API [D3] (hand-made, "sufficient for
 visualization" per FastF1's docs); they're mapped to lap distance by nearest XY point [M3],
 like FastF1's CircuitInfo.add_marker_distance. See docs/REFERENCES.md.
 """
-
-from __future__ import annotations
 
 import numpy as np
 import pandas as pd
@@ -36,7 +34,7 @@ def corner_analysis(
 
     Args:
         cmp: output of `compare_laps` (distance, speed_a/b, throttle_a/b, brake_a/b, time_a/b ...).
-        corners: output of `locate_corners` — at least `number` and `distance` (apex, m).
+        corners: output of `locate_corners`, with at least `number` and `distance` (apex, m).
         window_m: how far before the apex to look for the braking point.
 
     Returns:
@@ -47,4 +45,4 @@ def corner_analysis(
             brake_point_a/_b  float  where braking starts before the apex (m), NaN if no braking
             time_gain_b_s     float  time B gains vs A through the corner zone (> 0: B faster)
     """
-    raise NotImplementedError("TASK 1 — see docs/tasks/01-corner-analysis.md")
+    raise NotImplementedError("TASK 1: see docs/tasks/01-corner-analysis.md")

@@ -4,8 +4,6 @@
 CI appends the output to the job summary, so every push shows how far the tasks have come.
 """
 
-from __future__ import annotations
-
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -35,10 +33,10 @@ def main(path: str) -> None:
     print("| Task | Tests | Status |\n|------|-------|--------|")
     for module, title in TITLES.items():
         p, t = passed[module], total[module]
-        status = "✅ done" if t and p == t else ("🟡 in progress" if p else "⬜ not started")
+        status = "done" if t and p == t else ("in progress" if p else "not started")
         print(f"| {title} | {p}/{t} | {status} |")
     done = sum(1 for m in TITLES if total[m] and passed[m] == total[m])
-    print(f"\n**{done}/{len(TITLES)} tasks complete.** Details: `docs/tasks/`.")
+    print(f"\n{done}/{len(TITLES)} tasks complete. Details: `docs/tasks/`.")
 
 
 if __name__ == "__main__":

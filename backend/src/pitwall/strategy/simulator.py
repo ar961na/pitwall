@@ -15,10 +15,9 @@ and its open implementation https://github.com/TUMFTM/race-simulation (we re-imp
 much simpler single-car version; no code copied); common random numbers [M18].
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from itertools import combinations, product
+from typing import Self
 
 import numpy as np
 
@@ -117,7 +116,7 @@ class RaceScenarios:
     noise: np.ndarray  # (n_sims, n_laps) float
 
     @classmethod
-    def sample(cls, params: RaceParams, n_sims: int, seed: int = 0) -> RaceScenarios:
+    def sample(cls, params: RaceParams, n_sims: int, seed: int = 0) -> Self:
         rng = np.random.default_rng(seed)
         sc = sample_safety_cars(params, n_sims, rng)
         noise = rng.normal(0.0, params.lap_noise_s, size=sc.shape)
@@ -173,7 +172,7 @@ def optimize(
 ) -> list[dict]:
     """Two-stage search.
 
-    1. Score every legal strategy deterministically (no SC, no noise) — cheap.
+    1. Score every legal strategy deterministically (no SC, no noise), which is cheap.
     2. Monte-Carlo the shortlist (best overall + best few per stop count) on shared scenarios,
        rank by mean race time, and report P(best) = share of scenarios where it was fastest.
     """

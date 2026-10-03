@@ -1,12 +1,10 @@
-"""Pre-race features for finishing-position prediction — TASK 5 (docs/tasks/05-race-predictor.md).
+"""Pre-race features for finishing-position prediction (TASK 5, docs/tasks/05-race-predictor.md).
 
 The cardinal rule: a feature for race k may only use information available BEFORE the
 lights go out at race k (qualifying of race k is fine; its result is not).
 
 Data: Jolpica results + qualifying [D2]. Leakage: Kaufman et al. (2012) [M14].
 """
-
-from __future__ import annotations
 
 import pandas as pd
 
@@ -22,4 +20,4 @@ def build_features(results: pd.DataFrame) -> pd.DataFrame:
 
     Rows must keep their (year, round, driver) identity and order.
     """
-    raise NotImplementedError("TASK 5 — see docs/tasks/05-race-predictor.md")
+    raise NotImplementedError("TASK 5: see docs/tasks/05-race-predictor.md")

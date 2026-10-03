@@ -4,8 +4,6 @@ Runs go to a SQLite DB + artifact folder at the repo root. Browse them with:
     mlflow ui --backend-store-uri sqlite:///mlflow.db      (from the repo root)
 """
 
-from __future__ import annotations
-
 import os
 
 from pitwall.config import REPO_ROOT

@@ -6,7 +6,7 @@ import pytest
 
 from pitwall.static_demo import build, optimize_path, static_path
 
-# Same vectors are asserted in frontend/src/api/static.test.ts — change both together.
+# Same vectors are asserted in frontend/src/api/static.test.ts; change both together.
 VECTORS = [
     ("/health", "health.json"),
     ("/events/2026", "events/2026.json"),

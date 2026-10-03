@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException
 
 from pitwall.config import settings
@@ -14,6 +12,9 @@ def predict(year: int, event: str) -> dict:
     """Pre-race finishing-order prediction (after qualifying)."""
     if not MODEL_PATH.exists():
         raise HTTPException(
-            501, "No trained race predictor yet — that's TASK 5 (docs/tasks/05-race-predictor.md)"
+            501,
+            "No trained race predictor yet. Train one in TASK 5 (docs/tasks/05-race-predictor.md)",
         )
-    raise HTTPException(501, "Model exists — wire up inference here (TASK 5, final step)")
+    raise HTTPException(
+        501, "Model file found but inference is not wired up yet (TASK 5, final step)"
+    )

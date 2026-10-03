@@ -1,11 +1,9 @@
 """Historical results + qualifying from Jolpica (the maintained Ergast successor), 1950 → today.
 
-Source [D2]: Jolpica F1 API, https://github.com/jolpica/jolpica-f1 — Ergast-compatible endpoints
+Source [D2]: Jolpica F1 API, https://github.com/jolpica/jolpica-f1, Ergast-compatible endpoints
 `/ergast/f1/{year}/results.json` and `/ergast/f1/{year}/qualifying.json`.
 Data licence CC BY-NC-SA 4.0, non-commercial use, attribution required (TERMS.md in that repo).
 """
-
-from __future__ import annotations
 
 import datetime as dt
 
@@ -13,8 +11,8 @@ import pandas as pd
 
 from pitwall.data.http import CachedClient
 
-# Jolpica unauthenticated limits: 4 req/s burst, 500 req/h sustained
-# (https://github.com/jolpica/jolpica-f1/blob/main/docs/rate_limits.md)
+# Jolpica limits without a token: 4 req/s burst, 500 req/h (their docs/rate_limits.md).
+# 0.5 s spacing respects the burst limit; a season is about ten pages, far under 500/h.
 client = CachedClient("https://api.jolpi.ca/ergast/f1", "jolpica", min_interval_s=0.5)
 
 

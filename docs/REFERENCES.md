@@ -45,7 +45,7 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 | **M8** | Testing for a breakpoint when it's only defined under the alternative (why a plain F-test after grid search is optimistic) | Davies, R. B. (1987). *Hypothesis testing when a nuisance parameter is present only under the alternative.* Biometrika 74(1):33–43. doi:[10.1093/biomet/74.1.33](https://doi.org/10.1093/biomet/74.1.33) | Task 2 |
 | **M9** | Gradient-boosted decision trees | Ke, G. et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree.* NeurIPS 30. https://papers.nips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html | Tasks 3, 5 |
 | **M10** | Quantile regression / pinball loss for prediction intervals | Koenker, R. & Bassett, G. (1978). *Regression Quantiles.* Econometrica 46(1):33–50. doi:[10.2307/1913643](https://doi.org/10.2307/1913643) | Task 3 |
-| **M11** | Huber loss (robust to outlier laps) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | Tasks 3, 6 |
+| **M11** | Huber loss (less sensitive to outlier laps than squared error) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | Tasks 3, 6 |
 | **M12** | Mixed-effects models (stretch) | Bates, D. et al. (2015). *Fitting Linear Mixed-Effects Models Using lme4.* J. Stat. Softw. 67(1). doi:[10.18637/jss.v067.i01](https://doi.org/10.18637/jss.v067.i01) | Task 3 stretch |
 
 ### Validation

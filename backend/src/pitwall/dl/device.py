@@ -1,7 +1,5 @@
 """Pick the fastest torch device: Apple GPU (MPS) locally, CUDA on a cloud box, else CPU."""
 
-from __future__ import annotations
-
 
 def best_device():
     import torch

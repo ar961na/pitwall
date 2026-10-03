@@ -1,7 +1,5 @@
 """Data provenance, served so every client can show the attribution the licences require."""
 
-from __future__ import annotations
-
 from fastapi import APIRouter
 
 router = APIRouter(tags=["meta"])

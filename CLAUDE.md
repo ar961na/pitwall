@@ -1,5 +1,9 @@
 # pitwall: notes for Claude
 
+Follow ~/Work/references/AI_CONTEXT.md. Scope: `guidelines/ui.md` and `ui/tokens.css` for the
+frontend (copied verbatim to `frontend/src/styles/tokens.css`; fixes go in `index.css`, marked).
+`latex/` and `guidelines/latex-figures.md` are for LaTeX documents only, never the web app.
+
 This is a **collaborative learning project**. The owner is preparing for F1 data/ML roles and
 wants to be able to explain every line in an interview.
 

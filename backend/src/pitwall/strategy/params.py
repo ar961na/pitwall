@@ -1,11 +1,9 @@
 """Race and tyre parameters that drive the simulator (also the API schema).
 
 The DEFAULTS below are illustrative round numbers chosen by us so the simulator runs without
-data — they are NOT measured. `strategy/calibrate.py` replaces tyre and pit-loss values with
+data. They are NOT measured. `strategy/calibrate.py` replaces tyre and pit-loss values with
 ones fitted to a real race (OpenF1 [D1] laps + MultiViewer [D3] pit loss).
 """
-
-from __future__ import annotations
 
 import numpy as np
 from pydantic import BaseModel, Field

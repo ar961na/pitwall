@@ -1,7 +1,7 @@
 """Build a static snapshot of the API for the GitHub Pages demo.
 
 GitHub Pages can only serve files, so CI runs the real FastAPI app in-process (TestClient),
-requests every endpoint the UI needs for a handful of showcase sessions, and writes each JSON
+requests every endpoint the UI needs for a handful of featured sessions, and writes each JSON
 response to a file whose name is derived from the request (`static_path`). The frontend, built
 with VITE_STATIC_DEMO=true, reads those files instead of calling /api.
 
@@ -11,8 +11,6 @@ The snapshot contains data derived from OpenF1 [D1] and MultiViewer [D3]; it is 
 the same CC BY-NC-SA 4.0 terms as OpenF1 (see docs/REFERENCES.md and the README.txt written next
 to the files).
 """
-
-from __future__ import annotations
 
 import argparse
 import itertools
@@ -32,8 +30,8 @@ from pitwall.data import openf1
 log = logging.getLogger("static_demo")
 
 FIRST_YEAR = 2023  # OpenF1 coverage starts here
-# Fixed showcase sessions (year, event, session name); the latest race weekend is added on top.
-SHOWCASE = [
+# Fixed featured sessions (year, event, session name); the latest race weekend is added on top.
+FEATURED = [
     (2026, "monza", "Race"),
     (2026, "monza", "Qualifying"),
     (2025, "zandvoort", "Race"),
@@ -80,7 +78,7 @@ def latest_completed(year: int, session_name: str) -> int | None:
     return int(done["session_key"].iloc[-1]) if not done.empty else None
 
 
-def showcase_keys(this_year: int) -> list[int]:
+def featured_keys(this_year: int) -> list[int]:
     keys: list[int] = []
     for name in ("Race", "Qualifying"):
         for year in (this_year, this_year - 1):
@@ -88,11 +86,11 @@ def showcase_keys(this_year: int) -> list[int]:
             if key:
                 keys.append(key)
                 break
-    for year, event, name in SHOWCASE:
+    for year, event, name in FEATURED:
         try:
             keys.append(openf1.find_session(year, event, name))
         except ValueError as e:
-            log.warning("showcase %s %s %s unavailable: %s", year, event, name, e)
+            log.warning("featured %s %s %s unavailable: %s", year, event, name, e)
     return list(dict.fromkeys(keys))
 
 
@@ -119,7 +117,7 @@ class Writer:
 
 def build(out: Path, keys: list[int] | None = None, this_year: int | None = None) -> dict:
     this_year = this_year or datetime.now(UTC).year
-    keys = showcase_keys(this_year) if keys is None else keys
+    keys = featured_keys(this_year) if keys is None else keys
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -129,7 +127,7 @@ def build(out: Path, keys: list[int] | None = None, this_year: int | None = None
     w.get("/sources")
     defaults = w.get("/strategy/defaults")
 
-    # Calendar, filtered down to the showcase sessions so the pickers only offer what exists.
+    # Calendar, filtered down to the featured sessions so the pickers only offer what exists.
     for year in range(FIRST_YEAR, this_year + 1):
         resp = w.client.get(f"/api/events/{year}") if keys else None
         events = resp.json() if resp is not None and resp.status_code == 200 else []
@@ -184,7 +182,7 @@ def main() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--sessions", type=int, nargs="*", help="session keys (default: showcase)")
+    ap.add_argument("--sessions", type=int, nargs="*", help="session keys (default: featured)")
     args = ap.parse_args()
     manifest = build(args.out, keys=args.sessions)
     print(json.dumps(manifest, indent=2))

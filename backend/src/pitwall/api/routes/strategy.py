@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -28,7 +26,7 @@ def defaults() -> RaceParams:
 @router.get("/sessions/{session_key}/strategy/calibrate")
 def calibrate(session_key: int, driver: str | None = None) -> RaceParams:
     """Simulator parameters fitted to a real race (tyre model + circuit pit loss)."""
-    session, laps, model = fit_race(session_key)
+    session, _laps, model = fit_race(session_key)
     if driver and driver not in model.driver_offset:
         raise HTTPException(404, f"No green-flag laps for {driver}")
     overrides = {}

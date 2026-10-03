@@ -55,5 +55,5 @@ def test_calibration_uses_fitted_values(rng):
     m = LinearDegradationModel.fit(laps)
     p = params_from_degradation(m, total_laps=50, driver="AAA", pit_loss_s=21.0)
     assert p.pit_loss_s == 21.0
-    assert abs(p.compounds["SOFT"].deg_s_per_lap - 0.09) < 0.01
-    assert abs(p.base_lap_time_s - (80.0 - 0.05)) < 0.1
+    assert abs(p.compounds["SOFT"].deg_s_per_lap - truth["deg"]["SOFT"]) < 0.01
+    assert abs(p.base_lap_time_s - (truth["driver"]["AAA"] + truth["lap_coef"])) < 0.1

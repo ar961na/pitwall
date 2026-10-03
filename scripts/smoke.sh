@@ -4,8 +4,8 @@
 #   docker compose up -d --wait && scripts/smoke.sh http://localhost:8080
 set -euo pipefail
 BASE="${1:-http://localhost:8080}"
-pass() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
-fail() { printf '  \033[31m✗\033[0m %s\n' "$1"; exit 1; }
+pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
+fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; exit 1; }
 
 echo "smoke test against $BASE"
 

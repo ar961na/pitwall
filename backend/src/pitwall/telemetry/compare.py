@@ -12,8 +12,6 @@ Methods (docs/REFERENCES.md): [M1] linear interpolation onto a distance grid (np
 [M2] distance from integrated speed, as in FastF1's Telemetry.integrate_distance.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pandas as pd
 

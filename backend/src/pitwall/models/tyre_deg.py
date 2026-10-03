@@ -6,7 +6,7 @@ Baseline (implemented): one linear model per race, fitted by least squares on gr
 
 * driver_offset soaks up car/driver pace, so the tyre terms are estimated *within* drivers.
 * lap_coef lumps fuel burn-off and track evolution together (both make cars faster per lap).
-  They are nearly collinear within one race — separating them is part of TASK 2.
+  They are nearly collinear within one race; separating them is part of TASK 2.
 * Degradation is linear: no cliff. Detecting the cliff is TASK 2.
 
 References (docs/REFERENCES.md): lap-time decomposition into base + tyre + fuel terms follows
@@ -14,9 +14,8 @@ Heilmeier et al. (2018) [M5]; driver dummies are a fixed-effects OLS [M6]; cliff
 breakpoint regression [M7] with the testing caveat of Davies (1987) [M8].
 """
 
-from __future__ import annotations
-
 from dataclasses import asdict, dataclass
+from typing import Self
 
 import numpy as np
 import pandas as pd
@@ -35,7 +34,7 @@ class LinearDegradationModel:
     n_laps: int
 
     @classmethod
-    def fit(cls, laps: pd.DataFrame) -> LinearDegradationModel:
+    def fit(cls, laps: pd.DataFrame) -> Self:
         """`laps` needs driver, compound, tyre_life, lap, lap_time_s (use `green_flag_laps`)."""
         drivers = sorted(laps["driver"].unique())
         compounds = [c for c in SLICK_COMPOUNDS if c in set(laps["compound"])]
@@ -83,7 +82,7 @@ class LinearDegradationModel:
 
 
 def detect_cliff(tyre_life: np.ndarray, lap_time_s: np.ndarray, min_laps: int = 5) -> int | None:
-    """TASK 2 — find the tyre age where degradation stops being linear ("the cliff").
+    """TASK 2: find the tyre age where degradation stops being linear ("the cliff").
 
     Args:
         tyre_life: tyre age per lap within ONE stint (fuel-corrected lap times work best).
@@ -94,4 +93,4 @@ def detect_cliff(tyre_life: np.ndarray, lap_time_s: np.ndarray, min_laps: int = 
         The tyre age at which the cliff starts, or None if a single straight line explains
         the stint just as well.
     """
-    raise NotImplementedError("TASK 2 — see docs/tasks/02-tyre-degradation.md")
+    raise NotImplementedError("TASK 2: see docs/tasks/02-tyre-degradation.md")

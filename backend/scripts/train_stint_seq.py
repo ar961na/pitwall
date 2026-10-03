@@ -1,11 +1,9 @@
-"""TASK 6 — train a sequence model that forecasts the next laps of a stint.
+"""TASK 6: train a sequence model that forecasts the next laps of a stint.
 
 Skeleton only: the TODOs are yours (docs/tasks/06-sequence-model.md).
 
     python scripts/train_stint_seq.py --years 2023 2024 --epochs 30
 """
-
-from __future__ import annotations
 
 import argparse
 
@@ -39,7 +37,7 @@ def main() -> None:
     print(f"training on {device} with {vars(args)}")
 
     # TODO 1: build the stint table (build_pace_dataset from TASK 3 + a stint_id column),
-    #         split by RACE in time (time_series_splits) — never randomly by window.
+    #         split by RACE in time (time_series_splits), never randomly by window.
     # TODO 2: make_windows(...) for train/val; normalise features with TRAIN statistics only.
     # TODO 3: DataLoaders, model, AdamW, MSE (or Huber) loss, early stopping on val loss.
     # TODO 4: compare against baselines on the same val windows:

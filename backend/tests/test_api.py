@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 from fastapi.testclient import TestClient
 
 from pitwall.api.main import app
@@ -20,7 +22,7 @@ def test_optimize():
     results = r.json()["results"]
     assert results[0]["gap_s"] == 0
     assert len(results[0]["clean_lap_times_s"]) == 57
-    assert all(a["mean_s"] <= b["mean_s"] for a, b in zip(results, results[1:], strict=False))
+    assert all(a["mean_s"] <= b["mean_s"] for a, b in pairwise(results))
 
 
 def test_optimize_rejects_bad_params():
