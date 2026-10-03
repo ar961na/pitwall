@@ -74,6 +74,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-# no type stubs published for these
-module = ["lightgbm.*", "mlflow.*", "scipy.*", "sklearn.*"]
+# no type stubs published for these, or optional extras (torch: `dl`, mlflow: `tracking`)
+# that CI's `test` install doesn't include
+module = ["lightgbm.*", "mlflow.*", "scipy.*", "sklearn.*", "torch", "torch.*"]
 ignore_missing_imports = true
