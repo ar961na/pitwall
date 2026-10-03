@@ -1,6 +1,6 @@
-# Continuous integration: every push and PR must pass lint, unit tests, the frontend build,
-# the Docker build and an end-to-end smoke test before anything is deployed (see pages.yml,
-# images.yml, which only run after this workflow succeeds on main).
+# CI for every push and pull request: lint, unit tests, frontend build, Docker build and an
+# end-to-end smoke test. On a push to main, once all of that passes, the deploy jobs at the
+# bottom call pages.yml and images.yml with only the permissions they need.
 name: CI
 
 on:
@@ -11,7 +11,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # cancel superseded PR runs, but never a main run that may be deploying
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -29,6 +30,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
@@ -65,6 +68,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -82,6 +87,8 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -102,6 +109,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Build images
         run: docker compose build
       - name: Lint + tests inside the image
@@ -115,3 +124,22 @@ jobs:
         run: docker compose logs --no-color
       - if: always()
         run: docker compose down -v
+
+  deploy-pages:
+    name: Deploy demo to GitHub Pages
+    needs: [backend, frontend, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+
+  publish-images:
+    name: Publish images to GHCR
+    needs: [backend, frontend, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml

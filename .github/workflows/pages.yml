@@ -1,22 +1,19 @@
-# Continuous deployment of the static demo to GitHub Pages.
-# Runs only after CI is green on main, every Monday (fresh race-weekend data), or by hand.
-# The snapshot is built by running the real FastAPI app against OpenF1 [D1] in CI
-# (python -m pitwall.static_demo) and is published under CC BY-NC-SA 4.0 like its source.
+# Deploy the static demo to GitHub Pages.
+# Called by ci.yml after every check passes on a push to main, rebuilt every Monday for fresh
+# race-weekend data, or run by hand. It always builds the commit it was started for (never
+# code from a pull request), so privileged deploys can't run untrusted code.
+# The snapshot is the real API run against OpenF1 [D1] (python -m pitwall.static_demo) and is
+# published under CC BY-NC-SA 4.0 like its source.
 name: Deploy demo (GitHub Pages)
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  workflow_call:
   schedule:
     - cron: "0 6 * * 1" # Mondays 06:00 UTC, after the race weekend
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -24,33 +21,30 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       PITWALL_DATA_DIR: ${{ github.workspace }}/data
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/pyproject.toml
       - run: pip install ./backend
       - name: Restore OpenF1 response cache
         uses: actions/cache@v6
         with:
           path: data/http_cache
-          key: http-cache-${{ github.run_id }}
-          restore-keys: http-cache-
+          key: openf1-http-cache-${{ github.run_id }}
+          restore-keys: openf1-http-cache-
       - name: Build API snapshot (live OpenF1, rate-limited)
         run: python -m pitwall.static_demo --out frontend/public/static-api
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
       - name: Build site
         working-directory: frontend
         env:
@@ -59,7 +53,6 @@ jobs:
         run: |
           npm ci
           npm run build
-      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
           path: frontend/dist
@@ -67,6 +60,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
