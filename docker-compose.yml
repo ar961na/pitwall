@@ -1,0 +1,28 @@
+# docker compose up --build        ->  app on http://localhost:8080 (API docs: http://localhost:8000/docs)
+# docker compose run --rm test     ->  backend lint + tests in a container
+services:
+  api:
+    build:
+      context: ./backend
+      target: runtime
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data # HTTP cache shared with the local env: data fetched once is reused
+      - ./models:/models # trained models you want the API to serve
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  test:
+    build:
+      context: ./backend
+      target: test
+    profiles: ["test"]

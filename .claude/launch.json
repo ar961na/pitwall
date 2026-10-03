@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "micromamba",
+      "runtimeArgs": ["run", "-n", "pitwall", "uvicorn", "pitwall.api.main:app", "--reload", "--port", "8000", "--app-dir", "backend/src"],
+      "port": 8000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "micromamba",
+      "runtimeArgs": ["run", "-n", "pitwall", "npm", "--prefix", "frontend", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# data & experiment artefacts (re-creatable; raw F1 data is never committed — see docs/REFERENCES.md)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+mlflow.db
+mlartifacts/
+mlruns/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.venv/
+
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# env / OS / editors
+.env
+.DS_Store
+.idea/
+.vscode/
+.claude/settings.local.json

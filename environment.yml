@@ -1,0 +1,15 @@
+# Local dev environment (Apple Silicon: PyTorch gets the MPS GPU backend here, which Docker can't use).
+#   micromamba create -f environment.yml -y && micromamba activate pitwall
+name: pitwall
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - nodejs=22
+  # lightgbm + pytorch from conda-forge so they share ONE OpenMP runtime (pip wheels each
+  # bundle their own libomp on macOS and crash with "OMP: Error #15").
+  - lightgbm>=4.3
+  - pytorch>=2.4
+  - pip:
+      - -e "./backend[dl,tracking,dev]"
