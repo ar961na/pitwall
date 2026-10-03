@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { labelForParams, optimizePath, rememberParams, staticPath } from './static'
 
-// Same vectors as backend/tests/test_static_demo.py — change both together.
+// Same vectors as backend/tests/test_static_demo.py; change both together.
 const VECTORS: [string, string][] = [
   ['/health', 'health.json'],
   ['/events/2026', 'events/2026.json'],

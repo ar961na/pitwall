@@ -3,7 +3,7 @@ import { SessionPicker } from '../components/SessionPicker'
 import { Card, TaskCallout } from '../components/ui'
 
 /**
- * FRONTEND TASK R1 — docs/tasks/R1-tyres-page.md
+ * FRONTEND TASK R1: docs/tasks/R1-tyres-page.md
  *
  * The backend already serves everything this page needs:
  *   GET /api/sessions/{session_key}/degradation   ->  DegradationResponse (see api/types.ts)
@@ -22,8 +22,8 @@ export function TyresPage() {
       <Card title="Tyre degradation">
         <SessionPicker sessionNames={['Race']} onChange={(k) => setSessionKey(k)} />
       </Card>
-      <TaskCallout task="TASK R1 — build this page">
-        Selected session_key: <code>{sessionKey ?? '—'}</code>. Fetch{' '}
+      <TaskCallout task="TASK R1: build this page">
+        Selected session_key: <code>{sessionKey ?? 'none'}</code>. Fetch{' '}
         <code>/api/sessions/{sessionKey ?? '{key}'}/degradation</code> and plot it. Instructions in{' '}
         <code>docs/tasks/R1-tyres-page.md</code>.
       </TaskCallout>

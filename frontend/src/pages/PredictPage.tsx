@@ -1,6 +1,6 @@
 import { Card, TaskCallout } from '../components/ui'
 
-/** FRONTEND TASK R2 — docs/tasks/R2-predict-page.md (after TASK 5 serves predictions). */
+/** FRONTEND TASK R2: docs/tasks/R2-predict-page.md (after TASK 5 serves predictions). */
 export function PredictPage() {
   return (
     <div className="page">

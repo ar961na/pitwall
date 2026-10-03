@@ -1,0 +1,74 @@
+/* Web UI design tokens. Separate from the LaTeX look on purpose.
+   Values marked PERSONALIZE are placeholders: replace them with your own style once,
+   and every project that copies this file inherits it. */
+
+:root {
+  /* Type. PERSONALIZE: font family */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --leading: 1.5;
+
+  /* Spacing, 4 px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius: 6px;
+  --border-width: 1px;
+
+  /* Color, light. PERSONALIZE: accent */
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --border: #e3e5e8;
+  --text: #16181d;
+  --text-muted: #5c6370;
+  --accent: #2563eb;
+  --accent-text: #ffffff;
+  --danger: #c62828;
+  --success: #2e7d32;
+  --warning: #b26a00;
+
+  /* Chart series, in order. PERSONALIZE: keep them distinguishable for colorblind viewers */
+  --series-1: #2563eb;
+  --series-2: #d97706;
+  --series-3: #059669;
+  --series-4: #dc2626;
+  --series-5: #7c3aed;
+  --series-6: #0891b2;
+  --chart-grid: #eceef1;
+  --chart-axis: #8a919c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1115;
+    --surface: #171a20;
+    --border: #2a2e36;
+    --text: #e8eaed;
+    --text-muted: #9aa1ac;
+    --accent: #5b8def;
+    --accent-text: #0f1115;
+    --chart-grid: #22262d;
+    --chart-axis: #6b7280;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1115;
+  --surface: #171a20;
+  --border: #2a2e36;
+  --text: #e8eaed;
+  --text-muted: #9aa1ac;
+  --accent: #5b8def;
+  --accent-text: #0f1115;
+  --chart-grid: #22262d;
+  --chart-axis: #6b7280;
+}
