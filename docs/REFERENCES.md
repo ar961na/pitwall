@@ -19,7 +19,9 @@ marks of Formula One Licensing B.V.
 | **D5** | **FastF1**: https://github.com/theOehrly/Fast-F1 · https://docs.fastf1.dev (MIT) | **Not used at runtime.** On 2026-10-03 F1's live-timing archive (`livetiming.formula1.com/static/…`, which FastF1 reads) answered our network with HTTP 403 from CloudFront, so pitwall reads D1 directly. Our distance integration and corner lookup follow FastF1's approach (see M2, M3). | — | MIT | design reference |
 
 **What this means for the repo:** raw data is **never committed** (`data/` is git-ignored and
-rebuilt from the cache). Derived artefacts we publish, such as predictions and charts, credit
+rebuilt from the cache). The GitHub Pages demo publishes a small **derived** snapshot
+(`static-api/`, built in CI by `pitwall.static_demo`), shared under CC BY-NC-SA 4.0 with a
+`README.txt` crediting the sources, as the licence's attribution and share-alike terms require. Derived artefacts we publish, such as predictions and charts, credit
 OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in its footer.
 
 ## Methods

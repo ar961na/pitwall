@@ -1,5 +1,11 @@
 # pitwall 🏎️
 
+[![CI](https://github.com/ar961na/pitwall/actions/workflows/ci.yml/badge.svg)](https://github.com/ar961na/pitwall/actions/workflows/ci.yml)
+[![Demo](https://github.com/ar961na/pitwall/actions/workflows/pages.yml/badge.svg)](https://ar961na.github.io/pitwall/)
+[![CodeQL](https://github.com/ar961na/pitwall/actions/workflows/codeql.yml/badge.svg)](https://github.com/ar961na/pitwall/actions/workflows/codeql.yml)
+
+**Live demo: https://ar961na.github.io/pitwall/** (static snapshot, refreshed weekly; see [CI/CD](#cicd))
+
 **An end-to-end F1 race-strategy toolkit:** telemetry comparison → tyre-degradation models →
 Monte Carlo strategy optimiser → race-outcome prediction, served by a FastAPI backend and a
 React dashboard.
@@ -46,6 +52,21 @@ make test           # offline unit tests (backend + frontend)
 make test-tasks     # acceptance tests for the hands-on tasks
 make test-network   # live checks against OpenF1 / Jolpica
 ```
+
+## CI/CD
+
+| Workflow | When | What it guarantees |
+|----------|------|--------------------|
+| [`ci.yml`](.github/workflows/ci.yml) | every push / PR | ruff + 33 offline tests on Python 3.11–3.13 with coverage; frontend lint, format, types, vitest, build (app + static demo); Docker build, tests inside the image, `docker compose up` + [end-to-end smoke test](scripts/smoke.sh) through nginx. Plus a non-blocking **task scoreboard** in the job summary. |
+| [`pages.yml`](.github/workflows/pages.yml) | after green CI on `main`, Mondays 06:00 UTC, manual | **CD:** runs the real API against OpenF1 for a few showcase sessions (`python -m pitwall.static_demo`), builds the React app in static mode and deploys it to GitHub Pages |
+| [`images.yml`](.github/workflows/images.yml) | after green CI on `main`, `v*` tags | **CD:** multi-arch (amd64/arm64) API + web images to `ghcr.io/ar961na/pitwall-{api,web}` |
+| [`weekly.yml`](.github/workflows/weekly.yml) | Mondays, PRs touching the env | `environment.yml` still solves and passes the suite; live contract tests against OpenF1 / Jolpica |
+| [`codeql.yml`](.github/workflows/codeql.yml) + [Dependabot](.github/dependabot.yml) | push / PR / weekly | security scanning; grouped weekly dependency updates |
+
+**Why the demo is static:** GitHub Pages only serves files, and the backend is Python. So CI runs
+the backend once and saves its JSON answers for the showcase sessions (latest race weekend,
+Monza 2026, Zandvoort 2025). The site reads those files instead of `/api`. Picking other
+sessions or editing simulator parameters needs the full app (`make api` + `make web`, or Docker).
 
 ## Hands-on tasks
 

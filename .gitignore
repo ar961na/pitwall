@@ -27,3 +27,9 @@ frontend/dist/
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# static demo snapshot (built in CI by python -m pitwall.static_demo)
+frontend/public/static-api/
+backend/tasks.xml
+backend/coverage.xml
+.coverage

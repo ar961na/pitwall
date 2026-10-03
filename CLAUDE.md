@@ -36,6 +36,18 @@ illustrative.
 - Network tests: `pytest -m network`. OpenF1's free tier is 30 req/min, and the client throttles
   and caches under `data/http_cache`.
 
+## CI/CD and the static demo
+
+- `.github/workflows/ci.yml` gates everything; `pages.yml` and `images.yml` run only after green
+  CI on main. Validate workflow edits with `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint`.
+- The GitHub Pages build is the React app with `VITE_STATIC_DEMO=true`, reading JSON written by
+  `python -m pitwall.static_demo`. File naming lives in two places that must agree:
+  `static_path`/`optimize_path` (backend/src/pitwall/static_demo.py) and
+  `staticPath`/`optimizePath` (frontend/src/api/static.ts). Shared test vectors guard this.
+- A new endpoint the UI calls must also be added to `static_demo.build()`, or the demo shows
+  "not included in the static demo".
+- `scripts/smoke.sh` is the end-to-end check (`make smoke` after `make up`).
+
 ## Gotchas
 
 - F1's live-timing archive (used by FastF1) returns 403 on this network, so don't reintroduce

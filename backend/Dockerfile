@@ -21,7 +21,7 @@ COPY src ./src
 RUN pip install --no-deps .
 
 FROM base AS test
-RUN pip install "pytest>=8" "ruff>=0.6"
+RUN pip install "pytest>=8" "pytest-cov>=5" "ruff>=0.6"
 COPY tests ./tests
 COPY scripts ./scripts
 CMD ["sh", "-c", "ruff check src tests && pytest"]

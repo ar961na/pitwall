@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { REPO_URL, STATIC_DEMO } from './api/static'
+import { DemoBanner } from './components/DemoBanner'
 import { PredictPage } from './pages/PredictPage'
 import { StrategyPage } from './pages/StrategyPage'
 import { TelemetryPage } from './pages/TelemetryPage'
@@ -43,12 +45,13 @@ export default function App() {
         </nav>
       </header>
       <main>
+        {STATIC_DEMO && <DemoBanner />}
         <Page />
       </main>
       <footer className="footer">
         Data: <a href="https://openf1.org">OpenF1</a> and <a href="https://github.com/jolpica/jolpica-f1">Jolpica F1</a>{' '}
         (both CC BY-NC-SA 4.0), circuit info: <a href="https://multiviewer.app">MultiViewer</a>. Methods and sources:{' '}
-        <code>docs/REFERENCES.md</code>.
+        <a href={`${REPO_URL}/blob/main/docs/REFERENCES.md`}>docs/REFERENCES.md</a>.
         <br />
         Unofficial, non-commercial project; not associated with Formula 1. F1 and related marks are trade marks of
         Formula One Licensing B.V.
