@@ -1,29 +1,69 @@
-# data & experiment artefacts (re-creatable; raw F1 data is never committed — see docs/REFERENCES.md)
+# Based on ~/Work/references/python/gitignore, plus the frontend and project specifics.
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+.venv/
+venv/
+.python-version
+
+# Tools
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+backend/tasks.xml
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Data and models are never committed (licensing and size); see docs/REFERENCES.md
 data/*
 !data/.gitkeep
 models/*
 !models/.gitkeep
-mlflow.db
-mlartifacts/
+*.csv
+*.parquet
+*.h5
+*.npz
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.ckpt
+*.onnx
+checkpoints/
+# small, self-made result files that are meant to be versioned
+!predictions/*.csv
+!predictions/*.json
+
+# Experiment tracking
 mlruns/
+mlartifacts/
+mlflow.db
+wandb/
+outputs/
+logs/
 
-# python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
-.ipynb_checkpoints/
-.venv/
-
-# node
+# Frontend
 node_modules/
 frontend/dist/
+frontend/public/static-api/
 *.tsbuildinfo
 
-# env / OS / editors
-.env
+# OS and editors
 .DS_Store
 .idea/
 .vscode/
+*.swp
 .claude/settings.local.json

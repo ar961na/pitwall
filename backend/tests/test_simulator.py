@@ -15,7 +15,7 @@ from pitwall.strategy.simulator import (
 
 
 def flat_params(**kw) -> RaceParams:
-    """No degradation, no noise, no SC — easy to reason about."""
+    """No degradation, no noise, no SC, so totals are easy to check by hand."""
     zero = CompoundParams(offset_s=0, deg_s_per_lap=0, cliff_age=99, cliff_s_per_lap2=0)
     base = dict(
         total_laps=20,

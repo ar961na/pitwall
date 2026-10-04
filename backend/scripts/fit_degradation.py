@@ -1,12 +1,10 @@
 """Fit the baseline tyre model on every race of a season and log each fit to MLflow.
 
-This is the reference pattern for experiment tracking — copy it for your own models.
+This is the reference pattern for experiment tracking. Copy it for your own models.
 
     python scripts/fit_degradation.py --year 2025
     mlflow ui --backend-store-uri sqlite:///mlflow.db     # from repo root, then http://localhost:5000
 """
-
-from __future__ import annotations
 
 import argparse
 import logging

@@ -20,7 +20,7 @@ Hints are hidden behind collapsible "Hint" blocks. Open one only after you've be
 | [2](02-tyre-degradation.md) | Fuel correction + cliff detection | regression, model selection, stats tests | Strategy simulator | 3–5 h |
 | [3](03-pace-model-gbm.md) | Multi-race pace model (LightGBM) | feature eng., time-series CV, quantiles, MLflow | Strategy + Task 6 baseline | 1–2 days |
 | [4](04-reactive-strategy.md) | Pit-under-safety-car policy | simulation, policies, variance reduction | Strategy page | 3–5 h |
-| [5](05-race-predictor.md) | Finishing-order predictor (+ serve it) | leakage-free features, ranking, calibration, MLOps | **Predict page — race weekends** | 2–3 days |
+| [5](05-race-predictor.md) | Finishing-order predictor (+ serve it) | leakage-free features, ranking, calibration, MLOps | Predict page, race weekends | 2–3 days |
 | [6](06-sequence-model.md) | Stint forecaster (PyTorch on MPS) | DL: LSTM/Transformer, training loops, baselines | Compare with Task 3 | 2–3 days |
 | [R1](R1-tyres-page.md) | Tyres page | React hooks, recharts | — | 3–5 h |
 | [R2](R2-predict-page.md) | Predict page | React, API design | uses Task 5 | 3–5 h |

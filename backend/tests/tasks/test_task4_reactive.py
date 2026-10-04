@@ -1,4 +1,4 @@
-"""TASK 4 acceptance tests — run:  pytest -m task tests/tasks/test_task4_reactive.py"""
+"""TASK 4 acceptance tests. Run:  pytest -m task tests/tasks/test_task4_reactive.py"""
 
 import numpy as np
 import pytest

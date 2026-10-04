@@ -4,14 +4,47 @@
     {
       "name": "api",
       "runtimeExecutable": "micromamba",
-      "runtimeArgs": ["run", "-n", "pitwall", "uvicorn", "pitwall.api.main:app", "--reload", "--port", "8000", "--app-dir", "backend/src"],
+      "runtimeArgs": [
+        "run",
+        "-n",
+        "pitwall",
+        "uvicorn",
+        "pitwall.api.main:app",
+        "--reload",
+        "--port",
+        "8000",
+        "--app-dir",
+        "backend/src"
+      ],
       "port": 8000
     },
     {
       "name": "web",
       "runtimeExecutable": "micromamba",
-      "runtimeArgs": ["run", "-n", "pitwall", "npm", "--prefix", "frontend", "run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "-n",
+        "pitwall",
+        "npm",
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "micromamba",
+      "runtimeArgs": [
+        "run",
+        "-n",
+        "pitwall",
+        "sh",
+        "-c",
+        "cd frontend && npm run build:demo && VITE_BASE=/pitwall/ npx vite preview --port 4173 --strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

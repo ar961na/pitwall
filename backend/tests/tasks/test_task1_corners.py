@@ -1,4 +1,4 @@
-"""TASK 1 acceptance tests — run:  pytest -m task tests/tasks/test_task1_corners.py"""
+"""TASK 1 acceptance tests. Run:  pytest -m task tests/tasks/test_task1_corners.py"""
 
 import numpy as np
 import pandas as pd

@@ -1,9 +1,9 @@
-"""OpenF1 — laps, stints, pits, race control and ~3.7 Hz car telemetry, 2023 onwards.
+"""OpenF1 client: laps, stints, pits, race control and ~3.7 Hz car telemetry, 2023 onwards.
 
 Sources (see docs/REFERENCES.md):
-    [D1] OpenF1 API, https://openf1.org/docs — endpoints used: sessions, meetings, drivers, laps,
+    [D1] OpenF1 API, https://openf1.org/docs. Endpoints used: sessions, meetings, drivers, laps,
          stints, pit, race_control, session_result, car_data, location.
-         Data licence CC BY-NC-SA 4.0 (https://github.com/br-g/openf1) — credit OpenF1,
+         Data licence CC BY-NC-SA 4.0 (https://github.com/br-g/openf1): credit OpenF1,
          non-commercial use only. Unofficial; not associated with Formula 1.
     [D3] MultiViewer circuit API (corners, pit loss), the same endpoint FastF1 uses for
          Session.get_circuit_info(): https://api.multiviewer.app/api/v1/circuits/{key}/{year}
@@ -11,8 +11,7 @@ Sources (see docs/REFERENCES.md):
          so pitwall reads OpenF1 directly.
 """
 
-from __future__ import annotations
-
+import logging
 from functools import lru_cache
 from urllib.parse import quote
 
@@ -21,11 +20,14 @@ import pandas as pd
 
 from pitwall.data.http import CachedClient
 
-# OpenF1 Community tier: 3 req/s and 30 req/min (https://openf1.org/#sponsorship) — stay under both.
+# OpenF1 Community tier allows 30 req/min (https://openf1.org/#sponsorship): 2 s apart + margin.
 client = CachedClient("https://api.openf1.org/v1", "openf1", min_interval_s=2.1)
+# MultiViewer publishes no limit; one request per second is our own courtesy choice.
 multiviewer = CachedClient("https://api.multiviewer.app/api/v1", "multiviewer", min_interval_s=1.0)
 
 DAY = 24 * 3600
+
+log = logging.getLogger(__name__)
 
 
 def get(endpoint: str, ttl_s: float | None = None, **params) -> pd.DataFrame:
@@ -109,6 +111,14 @@ class Session:
         self.laps_raw["date_start"] = pd.to_datetime(
             self.laps_raw["date_start"], utc=True, format="ISO8601"
         )
+        log.info(
+            "loaded %s: %d laps, %d stints, %d pit stops, %d race-control messages",
+            self.name,
+            len(self.laps_raw),
+            len(self.stints),
+            len(self.pits),
+            len(self.race_control),
+        )
 
     @property
     def name(self) -> str:
@@ -143,18 +153,18 @@ class Session:
             return status
         rc = rc.dropna(subset=["lap_number"])
         open_since: dict[str, int] = {}
-        for msg in rc.itertuples():
-            text, lap = str(msg.message).upper(), int(msg.lap_number)
+        for msg in rc.to_dict("records"):
+            text, lap = str(msg["message"]).upper(), int(msg["lap_number"])
             kind = "6" if "VIRTUAL" in text else "4"
-            if msg.category == "SafetyCar" and "DEPLOYED" in text:
+            if msg["category"] == "SafetyCar" and "DEPLOYED" in text:
                 open_since[kind] = lap
-            elif msg.category == "SafetyCar" and ("IN THIS LAP" in text or "ENDING" in text):
+            elif msg["category"] == "SafetyCar" and ("IN THIS LAP" in text or "ENDING" in text):
                 start = open_since.pop(kind, lap)
                 for n in range(start, lap + 1):
                     status[n] = kind
                 if kind == "4":
                     status.setdefault(lap + 1, "4")  # restart lap is not representative either
-            elif getattr(msg, "flag", None) == "RED":
+            elif msg.get("flag") == "RED":
                 status[lap] = "5"
         return status
 
@@ -165,7 +175,7 @@ class Session:
         ]
         if laps.empty:
             raise ValueError(f"No timed lap for {driver} in {self.name}")
-        return laps.loc[laps["lap_duration"].idxmin()]
+        return laps.iloc[int(np.argmin(laps["lap_duration"].to_numpy()))]
 
     def lap_telemetry(self, driver: str, lap_number: int | None = None) -> pd.DataFrame:
         """Car data + XY position for one lap (fastest if lap_number is None).

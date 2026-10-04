@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "build:demo": "VITE_STATIC_DEMO=true VITE_BASE=/pitwall/ npm run build",
+    "format:check": "prettier --check src",
+    "preview:demo": "VITE_BASE=/pitwall/ vite preview"
   },
   "dependencies": {
     "react": "^19.2.8",

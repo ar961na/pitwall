@@ -4,12 +4,17 @@ Source: OpenF1 [D1] `laps` (lap/sector times, pit-out flag), `stints` (compound,
 stint start), `pit` (in-laps) and `race_control` (neutralised laps). See docs/REFERENCES.md.
 """
 
-from __future__ import annotations
+import logging
 
 import numpy as np
 import pandas as pd
 
 SLICK_COMPOUNDS = ("SOFT", "MEDIUM", "HARD")
+# Assumption: laps slower than 107% of a driver's median are traffic, mistakes or unflagged
+# incidents. The number borrows F1's 107% qualifying rule; it is not fitted to data.
+OUTLIER_FACTOR = 1.07
+
+log = logging.getLogger(__name__)
 
 
 def race_laps(session) -> pd.DataFrame:
@@ -66,10 +71,11 @@ def race_laps(session) -> pd.DataFrame:
     df["total_laps"] = session.total_laps
     df["laps_remaining"] = df["total_laps"] - df["lap"]
     df["compound"] = df["compound"].fillna("UNKNOWN")
+    log.info("%s: %d laps from %d drivers", session.name, len(df), df["driver"].nunique())
     return df.sort_values(["driver", "lap"]).reset_index(drop=True)
 
 
-def green_flag_laps(df: pd.DataFrame, max_rel_to_median: float = 1.07) -> pd.DataFrame:
+def green_flag_laps(df: pd.DataFrame, max_rel_to_median: float = OUTLIER_FACTOR) -> pd.DataFrame:
     """Representative racing laps: green flag, no pit in/out, slicks, not lap 1, no outliers."""
     mask = (
         (df["track_status"] == "1")
@@ -82,4 +88,6 @@ def green_flag_laps(df: pd.DataFrame, max_rel_to_median: float = 1.07) -> pd.Dat
     )
     out = df[mask].copy()
     median = out.groupby("driver")["lap_time_s"].transform("median")
-    return out[out["lap_time_s"] <= median * max_rel_to_median].reset_index(drop=True)
+    out = out[out["lap_time_s"] <= median * max_rel_to_median].reset_index(drop=True)
+    log.info("green-flag filter kept %d of %d laps", len(out), len(df))
+    return out

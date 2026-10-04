@@ -4,8 +4,6 @@ Historical F1 data never changes, so once fetched it's cached forever under data
 Calls that can change (season calendars, today's session) pass a `ttl_s`.
 """
 
-from __future__ import annotations
-
 import hashlib
 import json
 import logging

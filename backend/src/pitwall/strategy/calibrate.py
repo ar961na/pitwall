@@ -4,8 +4,6 @@ Tyre terms come from LinearDegradationModel fitted on OpenF1 laps [D1]; the API 
 circuit's typical pit loss (normal and under SC) from MultiViewer's `pitLoss` field [D3].
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 from pitwall.models.tyre_deg import LinearDegradationModel
@@ -22,7 +20,7 @@ def params_from_degradation(
 
     Compounds that weren't raced (or fitted to a nonsensical negative degradation) fall back
     to the defaults, shifted onto this race's pace scale. Cliffs aren't estimated by the
-    linear model, so they come from the defaults — TASK 2 replaces that with detected cliffs.
+    linear model, so they come from the defaults until TASK 2 replaces that with detected cliffs.
     """
     offsets = model.driver_offset
     driver_offset = offsets[driver] if driver else float(np.median(list(offsets.values())))

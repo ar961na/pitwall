@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 
@@ -7,6 +5,9 @@ from pitwall.api.utils import get_session
 from pitwall.data import openf1
 
 router = APIRouter(tags=["events"])
+
+# Assumption, not measured: a session plus data publication is over within 3 h of its start.
+SESSION_DONE_AFTER = pd.Timedelta(hours=3)
 
 
 @router.get("/events/{year}")
@@ -20,24 +21,25 @@ def events(year: int) -> list[dict]:
         return []
     now = pd.Timestamp.now(tz="UTC")
     out = []
-    for rnd, m in enumerate(mtgs.itertuples(), start=1):
-        s = sess[sess["meeting_key"] == m.meeting_key]
+    for rnd, m in enumerate(mtgs.to_dict("records"), start=1):
+        s = sess[sess["meeting_key"] == m["meeting_key"]]
         out.append(
             {
                 "round": rnd,
-                "meeting_key": int(m.meeting_key),
-                "name": m.meeting_name,
-                "circuit": m.circuit_short_name,
-                "country": m.country_name,
-                "date": m.date_start.date().isoformat(),
+                "meeting_key": int(m["meeting_key"]),
+                "name": m["meeting_name"],
+                "circuit": m["circuit_short_name"],
+                "country": m["country_name"],
+                "date": m["date_start"].date().isoformat(),
                 "sessions": [
                     {
-                        "session_key": int(x.session_key),
-                        "name": x.session_name,
-                        "date": x.date_start.isoformat(),
-                        "completed": bool(x.date_start + pd.Timedelta(hours=3) < now),
+                        "session_key": int(x["session_key"]),
+                        "name": x["session_name"],
+                        "date": x["date_start"].isoformat(),
+                        # results arrive a while after the scheduled start
+                        "completed": bool(x["date_start"] + SESSION_DONE_AFTER < now),
                     }
-                    for x in s.itertuples()
+                    for x in s.to_dict("records")
                 ],
             }
         )
@@ -51,15 +53,15 @@ def drivers(session_key: int) -> list[dict]:
     if not session.results.empty and "position" in session.results:
         pos = dict(zip(session.results["driver_number"], session.results["position"], strict=True))
     out = []
-    for d in session.drivers.itertuples():
-        p = pos.get(d.driver_number)
+    for d in session.drivers.to_dict("records"):
+        p = pos.get(d["driver_number"])
         out.append(
             {
-                "number": int(d.driver_number),
-                "code": d.name_acronym,
-                "name": d.full_name,
-                "team": d.team_name,
-                "color": f"#{d.team_colour or '888888'}",
+                "number": int(d["driver_number"]),
+                "code": d["name_acronym"],
+                "name": d["full_name"],
+                "team": d["team_name"],
+                "color": f"#{d['team_colour'] or '888888'}",
                 "position": None if p is None or pd.isna(p) else int(p),
             }
         )

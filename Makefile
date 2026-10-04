@@ -1,5 +1,5 @@
 # Shortcuts. Local targets assume `micromamba activate pitwall`.
-.PHONY: env api web test test-tasks test-network lint fmt mlflow up down docker-test
+.PHONY: env api web test test-tasks test-network scoreboard lint fmt mlflow up down docker-test smoke demo
 
 env:            ## create the micromamba env (Python + Node + PyTorch/MPS)
 	micromamba create -f environment.yml -y
@@ -16,6 +16,9 @@ test:           ## backend + frontend tests (offline)
 
 test-tasks:     ## acceptance tests for docs/tasks (fail until you implement them)
 	cd backend && pytest -m task
+
+scoreboard:     ## task progress table (same as the CI job summary)
+	cd backend && (pytest -m task --junitxml=tasks.xml -q >/dev/null || true) && python scripts/task_scoreboard.py tasks.xml && rm tasks.xml
 
 test-network:   ## live checks against OpenF1 / Jolpica
 	cd backend && pytest -m network
@@ -39,3 +42,10 @@ down:
 
 docker-test:    ## backend lint + tests inside the container
 	docker compose run --rm --build test
+
+smoke:          ## end-to-end checks against the running Docker stack
+	scripts/smoke.sh http://localhost:8080
+
+demo:           ## build + preview the GitHub Pages static demo on http://localhost:4173/pitwall/
+	cd backend && python -m pitwall.static_demo --out ../frontend/public/static-api
+	cd frontend && npm run build:demo && npm run preview:demo

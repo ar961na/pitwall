@@ -4,8 +4,8 @@ import { api } from '../api/client'
 import type { CompareResponse, Driver } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { TrackMap } from '../components/TrackMap'
-import { Card, Status, TaskCallout } from '../components/ui'
-import { formatLapTime } from '../lib/format'
+import { Card, Empty, SeriesLegend, Status, TaskCallout } from '../components/ui'
+import { formatLapTime, MISSING, SERIES_DASH } from '../lib/format'
 import { useApi } from '../hooks/useApi'
 
 type Row = Record<string, number>
@@ -48,16 +48,16 @@ export function TelemetryPage() {
     () => Object.fromEntries((drivers.data ?? []).map((d) => [d.code, d])) as Record<string, Driver>,
     [drivers.data],
   )
-  const colorA = byCode[compare?.a ?? a]?.color ?? '#4f9cf9'
-  const rawB = byCode[compare?.b ?? b]?.color ?? '#ff8000'
-  const colorB = rawB === colorA ? '#f5f5f5' : rawB // teammates share a colour
+  const colorA = byCode[compare?.a ?? a]?.color ?? 'var(--series-2)'
+  const rawB = byCode[compare?.b ?? b]?.color ?? 'var(--series-3)'
+  const colorB = rawB === colorA ? 'var(--text)' : rawB // teammates share a team colour
 
   const data = result.data
   const rows = useMemo(() => (data ? toRows(data.channels) : []), [data])
 
   return (
     <div className="page">
-      <Card title="Lap comparison">
+      <section className="controls" aria-label="Lap comparison">
         <div className="toolbar">
           <SessionPicker preferred="Qualifying" onChange={(k) => setSessionKey(k)} />
           <DriverSelect drivers={drivers.data} value={a} onChange={setA} label="Driver A" />
@@ -67,9 +67,21 @@ export function TelemetryPage() {
             Compare fastest laps
           </button>
         </div>
-        <Status loading={drivers.loading} error={drivers.error} hint="Loading session (first time can take ~20 s)…" />
-        <Status loading={result.loading} error={result.error} hint="Fetching telemetry…" />
-      </Card>
+        <Status
+          loading={drivers.loading}
+          error={drivers.error}
+          hint="Loading session. The first load of a session takes about 20 s (OpenF1 rate limit)."
+        />
+        <Status loading={result.loading} error={result.error} hint="Loading telemetry for both laps…" />
+      </section>
+
+      {!data && !result.loading && !result.error && (
+        <Empty>
+          {drivers.data && drivers.data.length === 0
+            ? 'No driver data for this session yet. Pick an earlier session.'
+            : 'Pick a session and two drivers, then compare their fastest laps.'}
+        </Empty>
+      )}
 
       {data && (
         <>
@@ -83,18 +95,43 @@ export function TelemetryPage() {
           </div>
 
           <div className="grid-2">
-            <Card title="Speed (km/h)">
+            <Card title="Speed">
+              <SeriesLegend
+                items={[
+                  { label: data.a.driver, color: colorA },
+                  { label: data.b.driver, color: colorB },
+                ]}
+              />
               <Chart
+                names={[data.a.driver, data.b.driver]}
+                yLabel="km/h"
+                unit=" km/h"
                 rows={rows}
                 keys={['speed_a', 'speed_b']}
                 colors={[colorA, colorB]}
                 corners={data.corners}
                 height={260}
               />
-              <h3>Delta (s) · above 0 = {data.b.driver} behind</h3>
-              <Chart rows={rows} keys={['delta']} colors={[colorB]} height={140} zeroLine />
+              <h3>Gap along the lap: above 0 means {data.b.driver} is behind</h3>
+              <Chart
+                rows={rows}
+                keys={['delta']}
+                names={[`${data.b.driver} gap`]}
+                colors={['var(--text)']}
+                yLabel="s"
+                unit=" s"
+                height={140}
+                zeroLine
+                xLabel
+              />
             </Card>
-            <Card title="Who's faster where">
+            <Card title="Faster driver per minisector">
+              <SeriesLegend
+                items={[
+                  { label: `${data.a.driver} faster`, color: colorA },
+                  { label: `${data.b.driver} faster`, color: colorB },
+                ]}
+              />
               <TrackMap
                 distance={data.channels.distance as number[]}
                 x={data.channels.x_a as number[]}
@@ -107,16 +144,42 @@ export function TelemetryPage() {
             </Card>
           </div>
 
-          <Card title="Throttle & brake (%)">
-            <Chart rows={rows} keys={['throttle_a', 'throttle_b']} colors={[colorA, colorB]} height={140} />
-            <Chart rows={rows} keys={['brake_a', 'brake_b']} colors={[colorA, colorB]} height={90} step />
+          <Card title="Throttle and brake">
+            <SeriesLegend
+              items={[
+                { label: data.a.driver, color: colorA },
+                { label: data.b.driver, color: colorB },
+              ]}
+            />
+            <Chart
+              rows={rows}
+              keys={['throttle_a', 'throttle_b']}
+              names={[data.a.driver, data.b.driver]}
+              colors={[colorA, colorB]}
+              yLabel="throttle %"
+              unit=" %"
+              height={140}
+            />
+            <Chart
+              rows={rows}
+              keys={['brake_a', 'brake_b']}
+              names={[data.a.driver, data.b.driver]}
+              colors={[colorA, colorB]}
+              yLabel="brake"
+              brake
+              height={96}
+              xLabel
+              step
+            />
           </Card>
 
           <Card title="Corner by corner">
             {data.corner_analysis ? (
-              <CornerTable rows={data.corner_analysis} a={data.a.driver} b={data.b.driver} />
+              <div className="table-wrap">
+                <CornerTable rows={data.corner_analysis} a={data.a.driver} b={data.b.driver} />
+              </div>
             ) : (
-              <TaskCallout task="TASK 1 — corner analysis">
+              <TaskCallout task="TASK 1: corner analysis">
                 The backend replied: <code>{data.corner_analysis_status}</code>. Implement{' '}
                 <code>corner_analysis()</code> in <code>backend/src/pitwall/telemetry/corners.py</code> and this table
                 fills in.
@@ -154,50 +217,80 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
 interface ChartProps {
   rows: Row[]
   keys: string[]
+  names: string[]
   colors: string[]
   height: number
+  yLabel: string
+  unit?: string
   corners?: CompareResponse['corners']
   zeroLine?: boolean
+  xLabel?: boolean
+  brake?: boolean
   step?: boolean
 }
 
-function Chart({ rows, keys, colors, height, corners, zeroLine, step }: ChartProps) {
+// Axis lines use the token; tick and axis-title text use --text-muted, which passes 4.5:1.
+const AXIS = { stroke: 'var(--chart-axis)', fontSize: 12, tick: { fill: 'var(--text-muted)' } }
+const LABEL = { fill: 'var(--text-muted)', fontSize: 12 }
+
+function Chart({
+  rows,
+  keys,
+  names,
+  colors,
+  height,
+  yLabel,
+  unit = '',
+  corners,
+  zeroLine,
+  xLabel,
+  brake,
+  step,
+}: ChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={height + (xLabel ? 16 : 0)}>
       {/* syncId links the hover cursor across every chart on the page */}
-      <LineChart data={rows} syncId="telemetry" margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-        <CartesianGrid stroke="var(--grid)" vertical={false} />
+      <LineChart data={rows} syncId="telemetry" margin={{ top: 8, right: 8, bottom: xLabel ? 16 : 0, left: 8 }}>
+        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
         <XAxis
           dataKey="distance"
           type="number"
           domain={['dataMin', 'dataMax']}
-          tickFormatter={(d) => `${(d / 1000).toFixed(1)}k`}
-          stroke="var(--muted)"
-          fontSize={11}
+          tickFormatter={(d) => (d / 1000).toFixed(1)}
+          label={xLabel ? { value: 'Distance (km)', position: 'insideBottom', offset: -12, ...LABEL } : undefined}
+          {...AXIS}
         />
-        <YAxis stroke="var(--muted)" fontSize={11} domain={['auto', 'auto']} />
+        <YAxis
+          domain={brake ? [0, 100] : ['auto', 'auto']}
+          ticks={brake ? [0, 100] : undefined}
+          tickFormatter={brake ? (v) => (v ? 'on' : 'off') : undefined}
+          width={48}
+          label={{ value: yLabel, angle: -90, position: 'insideLeft', ...LABEL }}
+          {...AXIS}
+        />
         <Tooltip
-          contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)' }}
+          contentStyle={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
           labelFormatter={(d) => `${Math.round(Number(d))} m`}
-          formatter={(v) => Number(v).toFixed(2)}
+          formatter={(v) => (brake ? (Number(v) ? 'on' : 'off') : `${Number(v).toFixed(unit === ' s' ? 3 : 1)}${unit}`)}
         />
-        {zeroLine && <ReferenceLine y={0} stroke="var(--muted)" />}
+        {zeroLine && <ReferenceLine y={0} stroke="var(--text-muted)" />}
         {corners?.map((c) => (
           <ReferenceLine
             key={`${c.number}${c.letter}`}
             x={c.distance}
-            stroke="var(--grid)"
-            label={{ value: `${c.number}${c.letter}`, position: 'insideTop', fill: 'var(--muted)', fontSize: 10 }}
+            stroke="var(--chart-grid)"
+            label={{ value: `${c.number}${c.letter}`, position: 'insideTop', fill: 'var(--text-muted)', fontSize: 10 }}
           />
         ))}
         {keys.map((k, i) => (
           <Line
             key={k}
             dataKey={k}
+            name={names[i]}
             stroke={colors[i]}
             dot={false}
             strokeWidth={1.5}
-            strokeDasharray={i === 1 ? '5 3' : undefined}
+            strokeDasharray={SERIES_DASH[i]}
             isAnimationActive={false}
             type={step ? 'stepAfter' : 'linear'}
           />
@@ -208,16 +301,16 @@ function Chart({ rows, keys, colors, height, corners, zeroLine, step }: ChartPro
 }
 
 function CornerTable({ rows, a, b }: { rows: Record<string, number | null>[]; a: string; b: string }) {
-  const f = (v: number | null | undefined, d = 0) => (v == null ? '—' : v.toFixed(d))
+  const f = (v: number | null | undefined, d = 0) => (v == null ? MISSING : v.toFixed(d))
   return (
     <table>
       <thead>
         <tr>
           <th>Turn</th>
-          <th>Min speed {a}</th>
-          <th>Min speed {b}</th>
-          <th>Brake point {a}</th>
-          <th>Brake point {b}</th>
+          <th>Min speed {a} (km/h)</th>
+          <th>Min speed {b} (km/h)</th>
+          <th>Brake point {a} (m)</th>
+          <th>Brake point {b} (m)</th>
           <th>{b} gains (s)</th>
         </tr>
       </thead>
