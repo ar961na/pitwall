@@ -2,7 +2,7 @@
 #   docker compose up --build              -> runtime
 #   docker compose run --rm test           -> runs pytest + ruff in the `test` stage
 
-FROM python:3.12-slim AS base
+FROM python:3.15-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
