@@ -25,6 +25,7 @@ class OptimizeRequest(BaseModel):
     min_stint: int = Field(8, ge=3)
     n_sims: int = Field(2000, ge=100, le=20000)
     seed: int = 0
+    reactive: bool = Field(False, description="Rank with early stops under a safety car")
 
 
 @router.get("/strategy/defaults")
@@ -62,6 +63,7 @@ def run_optimize(req: OptimizeRequest) -> dict:
         min_stint=req.min_stint,
         n_sims=req.n_sims,
         seed=req.seed,
+        simulator=simulate_reactive if req.reactive else None,
     )
     # Same seed as optimize(), so these are the scenarios the ranking was computed on.
     scenarios = RaceScenarios.sample(req.params, req.n_sims, req.seed)
@@ -72,4 +74,4 @@ def run_optimize(req: OptimizeRequest) -> dict:
         row["reactive_gain_s"] = round(fixed.mean - reactive.mean, 3)
         if i < 3:  # lap-time traces for the chart
             row["clean_lap_times_s"] = clean_lap_times(strat, req.params).round(3).tolist()
-    return {"params": req.params, "results": rows}
+    return {"params": req.params, "reactive": req.reactive, "results": rows}

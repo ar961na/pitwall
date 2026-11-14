@@ -43,3 +43,12 @@ def test_sources_lists_attribution():
     body = client.get("/api/sources").json()
     assert {s["tag"] for s in body["sources"]} == {"D1", "D2", "D3"}
     assert "not associated with Formula 1" in body["disclaimer"]
+
+
+def test_optimize_reactive_ranks_with_the_policy():
+    body = {"n_sims": 300, "params": {"sc_prob_per_lap": 0.05}}
+    fixed = client.post("/api/strategy/optimize", json=body).json()
+    reactive = client.post("/api/strategy/optimize", json={**body, "reactive": True}).json()
+    assert reactive["reactive"] is True and fixed["reactive"] is False
+    # with frequent safety cars, reacting makes the best strategy faster on average
+    assert reactive["results"][0]["mean_s"] < fixed["results"][0]["mean_s"]

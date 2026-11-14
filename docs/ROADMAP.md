@@ -6,7 +6,7 @@
 - Telemetry: distance-aligned lap comparison, minisector map, corner-by-corner table
 - Tyres: linear degradation model per race, cliff detection per stint (late-stint breakpoints only)
 - Strategy: Monte Carlo optimiser, calibration from a real race (tyres, cliffs, pit loss),
-  gain from reacting to safety cars
+  gain from reacting to safety cars, optional ranking with that reaction applied
 - Building blocks for the models below: multi-race pace dataset, race-ordered CV splits,
   leakage-free pre-race features, stint windows for sequence models
 - Race predictor: LambdaMART ranker with Plackett-Luce probabilities, pre- and post-qualifying
@@ -19,6 +19,5 @@
 
 1. Multi-race LightGBM pace model with quantile intervals, compared with the per-race linear model
 2. Stint sequence model (PyTorch) compared with persistence and the pace model
-3. Reactive policy as an option in the Strategy page ranking, not only a reported gain
 4. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
 5. Triage the open Dependabot PRs (several are major version bumps)

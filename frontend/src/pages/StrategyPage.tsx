@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api/client'
+import { STATIC_DEMO } from '../api/static'
 import type { CompoundParams, OptimizeResponse, RaceParams } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { Card, CompoundChip, Empty, Status } from '../components/ui'
@@ -39,6 +40,7 @@ export function StrategyPage() {
   const [calibrating, setCalibrating] = useState(false)
   const [maxStops, setMaxStops] = useState(2)
   const [nSims, setNSims] = useState(2000)
+  const [reactive, setReactive] = useState(false)
   const [result, setResult] = useState<OptimizeResponse | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string>()
@@ -63,7 +65,7 @@ export function StrategyPage() {
     setRunning(true)
     setError(undefined)
     try {
-      setResult(await api.optimize({ params, max_stops: maxStops, min_stint: 8, n_sims: nSims, seed: 0 }))
+      setResult(await api.optimize({ params, max_stops: maxStops, min_stint: 8, n_sims: nSims, seed: 0, reactive }))
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -176,6 +178,21 @@ export function StrategyPage() {
                 <option key={n}>{n}</option>
               ))}
             </select>
+          </label>
+          <label
+            title={
+              STATIC_DEMO
+                ? 'Needs the live simulator'
+                : 'Pit early when a safety car comes out within 6 laps before a planned stop'
+            }
+          >
+            <input
+              type="checkbox"
+              checked={reactive}
+              disabled={STATIC_DEMO}
+              onChange={(e) => setReactive(e.target.checked)}
+            />
+            React to safety cars
           </label>
           <button onClick={run} disabled={!params || running}>
             {running ? 'Simulating…' : 'Find best strategy'}

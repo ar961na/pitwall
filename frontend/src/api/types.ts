@@ -105,6 +105,7 @@ export interface OptimizeRequest {
   min_stint: number
   n_sims: number
   seed: number
+  reactive: boolean
 }
 
 export interface OptimizeResponse {
