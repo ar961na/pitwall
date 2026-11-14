@@ -138,3 +138,42 @@ export interface DegradationResponse {
     predicted_s: number
   }[]
 }
+
+export type RoundState = 'finished' | 'qualified' | 'upcoming'
+
+export interface PredictRound {
+  round: number
+  name: string
+  date: string
+  state: RoundState
+}
+
+export interface PredictedDriver {
+  driver_id: string
+  code: string
+  constructor_id: string
+  grid: number | null
+  predicted_position: number
+  expected_position: number
+  p_win: number
+  p_podium: number
+  actual_position: number | null
+}
+
+export interface Prediction {
+  year: number
+  round: number
+  race_name: string
+  state: RoundState
+  variant: 'post_quali' | 'pre_quali'
+  in_training_data: boolean
+  score: { spearman: number; winner_predicted: boolean; winner_p_win: number } | null
+  model: {
+    trained_at: string
+    years: [number, number]
+    n_races: number
+    // race-ordered cross-validation, with the same metrics for plain grid order
+    cv: Record<string, number>
+  }
+  drivers: PredictedDriver[]
+}

@@ -43,6 +43,14 @@ illustrative.
   "not included in the static demo".
 - `scripts/smoke.sh` is the end-to-end check (`make smoke` after `make up`).
 
+## Race predictor
+
+- `predict/model.py` (ranker, Plackett-Luce sampling), `predict/service.py` (train, load, forecast
+  a round in state finished / qualified / upcoming), `scripts/train_race_predictor.py`.
+- The model file `models/race_predictor.joblib` is git-ignored. Without it `/api/predict/...`
+  answers 503; `make train-predictor` creates it. `pages.yml` trains one for the demo.
+- LGBM_PARAMS were picked by race-ordered CV; re-run that comparison before changing them.
+
 ## Gotchas
 
 - F1's live-timing archive (used by FastF1) returns 403 on this network, so don't reintroduce

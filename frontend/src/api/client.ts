@@ -15,6 +15,8 @@ import type {
   EventInfo,
   OptimizeRequest,
   OptimizeResponse,
+  Prediction,
+  PredictRound,
   RaceParams,
 } from './types'
 
@@ -70,4 +72,6 @@ export const api = {
     return params
   },
   optimize,
+  predictRounds: (year: number) => request<PredictRound[]>(`/predict/${year}`),
+  predict: (year: number, round: number) => request<Prediction>(`/predict/${year}/${round}`),
 }

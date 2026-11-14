@@ -39,6 +39,7 @@ def train_and_save(last_year: int, path: Path | None = None) -> dict:
         "predictors": train(results),
         "years": [FIRST_YEAR, last_year],
         "n_races": int(results.groupby(["year", "round"]).ngroups),
+        "last_race": [int(v) for v in results[["year", "round"]].iloc[-1]],
         "trained_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -143,6 +144,9 @@ def predict_round(year: int, rnd: int, bundle: dict | None = None) -> dict:
         "race_name": str(out["race_name"].iloc[0]),
         "state": state,
         "variant": variant,
+        # a finished race the model was trained on is not a fair test of it
+        "in_training_data": state == "finished"
+        and [year, rnd] <= bundle.get("last_race", [bundle["years"][1], 99]),
         "score": score,
         "model": {
             "trained_at": bundle["trained_at"],

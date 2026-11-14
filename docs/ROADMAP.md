@@ -9,13 +9,16 @@
   gain from reacting to safety cars
 - Building blocks for the models below: multi-race pace dataset, race-ordered CV splits,
   leakage-free pre-race features, stint windows for sequence models
+- Race predictor: LambdaMART ranker with Plackett-Luce probabilities, pre- and post-qualifying
+  variants, served from `/api/predict`, Predict page, included in the Pages demo. On 226
+  held-out races it beats grid order on rank correlation (0.66 vs 0.62) and ties it on picking
+  the winner (55%).
 - CI/CD: tests, type checks, Docker smoke test, GitHub Pages demo, GHCR images
 
 ## Next
 
-1. Tyres page in the web app (the API already serves the data)
-2. Race predictor: train on Jolpica history, evaluate with race-ordered CV, serve from
-   `/api/predict`, Predict page
-3. Multi-race LightGBM pace model with quantile intervals, compared with the per-race linear model
-4. Stint sequence model (PyTorch) compared with persistence and the pace model
-5. Reactive policy as an option in the Strategy page ranking, not only a reported gain
+1. Multi-race LightGBM pace model with quantile intervals, compared with the per-race linear model
+2. Stint sequence model (PyTorch) compared with persistence and the pace model
+3. Reactive policy as an option in the Strategy page ranking, not only a reported gain
+4. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
+5. Triage the open Dependabot PRs (several are major version bumps)

@@ -26,6 +26,7 @@ jobs:
       contents: read
     env:
       PITWALL_DATA_DIR: ${{ github.workspace }}/data
+      PITWALL_MODELS_DIR: ${{ github.workspace }}/models
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,6 +41,8 @@ jobs:
           path: data/http_cache
           key: openf1-http-cache-${{ github.run_id }}
           restore-keys: openf1-http-cache-
+      - name: Train the race predictor (Jolpica history, cached)
+        run: python backend/scripts/train_race_predictor.py
       - name: Build API snapshot (live OpenF1, rate-limited)
         run: python -m pitwall.static_demo --out frontend/public/static-api
       - uses: actions/setup-node@v7

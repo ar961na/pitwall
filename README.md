@@ -5,7 +5,7 @@
 
 F1 race-strategy toolkit: compare two drivers' laps on telemetry, fit tyre degradation to a real
 race, and search pit strategies with a Monte Carlo race simulator. A FastAPI backend serves it to a
-React dashboard. Race-outcome prediction is in progress.
+React dashboard. A ranking model forecasts the finishing order of each race.
 
 Demo: https://ar961na.github.io/pitwall/ (static snapshot of five sessions, rebuilt weekly; see
 [why it is static](#cicd)).
@@ -22,7 +22,7 @@ MultiViewer [D3] ──► corners, pit loss
 | Telemetry | Fastest lap of driver A vs B on a common distance grid: speed, throttle and brake, running delta, track map coloured by the faster driver per minisector | Working, including a corner-by-corner table (minimum speed, braking point, time gained) |
 | Strategy | Fits tyre degradation and pit loss to a real race, enumerates every legal 1 to 3 stop strategy, simulates them with random safety cars on common random numbers, ranks by mean race time and P(best) | Working. Also reports what reacting to safety cars would gain per strategy, and uses tyre cliffs detected in the race. |
 | Tyres | Degradation per compound, corrected for fuel and driver | API working, page in progress |
-| Predict | Finishing order with win and podium probabilities after qualifying | In progress |
+| Predict | Finishing order with win and podium probabilities for any round: from form before qualifying, from the grid after it, and scored against the result once the race is run | Working. Needs a trained model: `make train-predictor`. |
 
 ## Quick start
 
