@@ -30,8 +30,13 @@ def test_optimize_rejects_bad_params():
     assert client.post("/api/strategy/optimize", json={"n_sims": 5}).status_code == 422
 
 
-def test_predict_without_model_is_501():
-    assert client.get("/api/predict/2026/1").status_code == 501
+def test_predict_without_model_is_503(monkeypatch, tmp_path):
+    from pitwall.predict import service
+
+    monkeypatch.setattr(service, "MODEL_PATH", tmp_path / "missing.joblib")
+    r = client.get("/api/predict/2026/1")
+    assert r.status_code == 503
+    assert "train" in r.json()["detail"].lower()
 
 
 def test_sources_lists_attribution():

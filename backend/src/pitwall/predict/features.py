@@ -22,7 +22,9 @@ def _rolling_before(values: pd.Series, groups: pd.Series) -> pd.Series:
 def build_features(results: pd.DataFrame) -> pd.DataFrame:
     """Add pre-race features to a results table (output of `fetch_results`).
 
-    Adds driver_form_pos and team_form_pos (mean finishing position over the previous
+    Adds quali_gap_pct (best qualifying lap vs the fastest, in percent), grid_eff (grid with
+    pit-lane starts moved to the back), season points before the race for driver and team,
+    driver_form_pos and team_form_pos (mean finishing position over the previous
     FORM_WINDOW races) and driver_track_best (best finish at this circuit in earlier seasons).
     All are NaN when there is no history. Row order and (year, round, driver) identity are kept.
     """
@@ -42,6 +44,23 @@ def build_features(results: pd.DataFrame) -> pd.DataFrame:
     track["driver_track_best"] = track.groupby(["driver_id", "circuit_id"])["position"].transform(
         lambda s: s.cummin().shift(1)
     )
+
+    season = ["driver_id", "year"]
+    driver["driver_points_before"] = df.groupby(season)["points"].transform(
+        lambda s: s.cumsum().shift(1).fillna(0.0)
+    )
+    team_points = df[[*team_keys, "points"]].groupby(team_keys, as_index=False, sort=False).sum()
+    team_points["team_points_before"] = team_points.groupby(["constructor_id", "year"])[
+        "points"
+    ].transform(lambda s: s.cumsum().shift(1).fillna(0.0))
+    team = team.merge(team_points.drop(columns="points"), on=team_keys)
+
+    race = [df["year"], df["round"]]
+    best_lap = df[["q1_s", "q2_s", "q3_s"]].min(axis=1)
+    driver["quali_gap_pct"] = (best_lap / best_lap.groupby(race).transform("min") - 1) * 100
+    field = df.groupby(race)["driver_id"].transform("size")
+    # Jolpica codes a pit-lane start as grid 0; it is effectively last
+    driver["grid_eff"] = df["grid"].where(df["grid"] > 0, field)
 
     out = results.merge(driver, on=KEYS, how="left")
     out = out.merge(

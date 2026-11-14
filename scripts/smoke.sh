@@ -29,6 +29,6 @@ code="$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: applica
   -d '{"n_sims": 5}' "$BASE/api/strategy/optimize")"
 [[ "$code" == 422 ]] && pass "invalid request rejected (422)" || fail "validation returned $code"
 code="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/predict/2026/1")"
-[[ "$code" == 501 ]] && pass "GET /api/predict -> 501 until a model is trained" || fail "predict returned $code"
+[[ "$code" == 503 ]] && pass "GET /api/predict -> 503 until a model is trained" || fail "predict returned $code"
 
 echo "all smoke checks passed"
