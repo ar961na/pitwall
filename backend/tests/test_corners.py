@@ -1,5 +1,3 @@
-"""TASK 1 acceptance tests. Run:  pytest -m task tests/tasks/test_task1_corners.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,8 +5,6 @@ import pytest
 from pitwall.telemetry.compare import compare_laps
 from pitwall.telemetry.corners import corner_analysis
 from tests.conftest import corner_profile, make_lap_telemetry
-
-pytestmark = pytest.mark.task
 
 CORNERS = pd.DataFrame({"number": [1, 2], "distance": [1000.0, 3000.0]})
 

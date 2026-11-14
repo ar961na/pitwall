@@ -1,18 +1,13 @@
-import { Card, TaskCallout } from '../components/ui'
+import { Card, Empty } from '../components/ui'
 
-/** FRONTEND TASK R2: docs/tasks/R2-predict-page.md (after TASK 5 serves predictions). */
 export function PredictPage() {
   return (
     <div className="page">
       <Card title="Race prediction">
-        <TaskCallout task="TASK 5 + R2">
-          Train the finishing-order model (TASK 5), serve it from{' '}
-          <code>
-            GET /api/predict/{'{year}'}/{'{round}'}
-          </code>
-          , then show the predicted grid → finish here with win / podium probabilities. Run it on Saturday night, check
-          it on Sunday.
-        </TaskCallout>
+        <Empty>
+          No race predictor has been trained yet. Once one is, this page shows the predicted finishing order with win
+          and podium probabilities after qualifying.
+        </Empty>
       </Card>
     </div>
   )

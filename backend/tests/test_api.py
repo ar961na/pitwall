@@ -22,6 +22,7 @@ def test_optimize():
     results = r.json()["results"]
     assert results[0]["gap_s"] == 0
     assert len(results[0]["clean_lap_times_s"]) == 57
+    assert all(r["reactive_gain_s"] >= -0.5 for r in results)
     assert all(a["mean_s"] <= b["mean_s"] for a, b in pairwise(results))
 
 

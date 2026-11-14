@@ -1,5 +1,5 @@
 # Shortcuts. Local targets assume `micromamba activate pitwall`.
-.PHONY: env api web test test-tasks test-network scoreboard lint fmt mlflow up down docker-test smoke demo
+.PHONY: env api web test test-network lint fmt mlflow up down docker-test smoke demo
 
 env:            ## create the micromamba env (Python + Node + PyTorch/MPS)
 	micromamba create -f environment.yml -y
@@ -13,12 +13,6 @@ web:            ## React dev server on :5173 (proxies /api to :8000)
 test:           ## backend + frontend tests (offline)
 	cd backend && pytest
 	cd frontend && npm test
-
-test-tasks:     ## acceptance tests for docs/tasks (fail until you implement them)
-	cd backend && pytest -m task
-
-scoreboard:     ## task progress table (same as the CI job summary)
-	cd backend && (pytest -m task --junitxml=tasks.xml -q >/dev/null || true) && python scripts/task_scoreboard.py tasks.xml && rm tasks.xml
 
 test-network:   ## live checks against OpenF1 / Jolpica
 	cd backend && pytest -m network

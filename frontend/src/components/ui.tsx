@@ -36,16 +36,6 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>
 }
 
-/** Marks a part of the app that's waiting for one of the hands-on tasks. */
-export function TaskCallout({ task, children }: { task: string; children: ReactNode }) {
-  return (
-    <div className="task-callout">
-      <strong>{task}</strong>
-      <div>{children}</div>
-    </div>
-  )
-}
-
 export function CompoundChip({ compound, laps }: { compound: string; laps?: number }) {
   return (
     <span className="chip" title={laps === undefined ? compound : `${compound}, ${laps} laps`}>

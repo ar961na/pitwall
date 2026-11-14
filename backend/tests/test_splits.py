@@ -1,12 +1,8 @@
-"""TASK 3 acceptance tests. Run:  pytest -m task tests/tasks/test_task3_splits.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from pitwall.models.pace_gbm import time_series_splits
-
-pytestmark = pytest.mark.task
 
 
 @pytest.fixture

@@ -3,9 +3,18 @@ from pydantic import BaseModel, Field
 
 from pitwall.api.routes.degradation import fit_race
 from pitwall.data.openf1 import circuit_info
+from pitwall.models.tyre_deg import cliff_ages
 from pitwall.strategy.calibrate import params_from_degradation
 from pitwall.strategy.params import RaceParams
-from pitwall.strategy.simulator import Stint, Strategy, clean_lap_times, optimize
+from pitwall.strategy.policies import simulate_reactive
+from pitwall.strategy.simulator import (
+    RaceScenarios,
+    Stint,
+    Strategy,
+    clean_lap_times,
+    optimize,
+    simulate,
+)
 
 router = APIRouter(tags=["strategy"])
 
@@ -26,7 +35,7 @@ def defaults() -> RaceParams:
 @router.get("/sessions/{session_key}/strategy/calibrate")
 def calibrate(session_key: int, driver: str | None = None) -> RaceParams:
     """Simulator parameters fitted to a real race (tyre model + circuit pit loss)."""
-    session, _laps, model = fit_race(session_key)
+    session, laps, model = fit_race(session_key)
     if driver and driver not in model.driver_offset:
         raise HTTPException(404, f"No green-flag laps for {driver}")
     overrides = {}
@@ -34,7 +43,13 @@ def calibrate(session_key: int, driver: str | None = None) -> RaceParams:
     if info and info.get("pitLoss"):
         normal, sc = float(info["pitLoss"]["normal"]), float(info["pitLoss"]["sc"])
         overrides = {"pit_loss_s": normal, "sc_pit_loss_factor": round(sc / normal, 3)}
-    return params_from_degradation(model, total_laps=session.total_laps, driver=driver, **overrides)
+    return params_from_degradation(
+        model,
+        total_laps=session.total_laps,
+        driver=driver,
+        cliffs=cliff_ages(laps, model),
+        **overrides,
+    )
 
 
 @router.post("/strategy/optimize")
@@ -48,8 +63,13 @@ def run_optimize(req: OptimizeRequest) -> dict:
         n_sims=req.n_sims,
         seed=req.seed,
     )
-    # Lap-time traces for the top 3 so the UI can plot them.
-    for row in rows[:3]:
+    # Same seed as optimize(), so these are the scenarios the ranking was computed on.
+    scenarios = RaceScenarios.sample(req.params, req.n_sims, req.seed)
+    for i, row in enumerate(rows):
         strat = Strategy(tuple(Stint(s["compound"], s["laps"]) for s in row["stints"]))
-        row["clean_lap_times_s"] = clean_lap_times(strat, req.params).round(3).tolist()
+        fixed = simulate(strat, req.params, scenarios)
+        reactive = simulate_reactive(strat, req.params, scenarios)
+        row["reactive_gain_s"] = round(fixed.mean - reactive.mean, 3)
+        if i < 3:  # lap-time traces for the chart
+            row["clean_lap_times_s"] = clean_lap_times(strat, req.params).round(3).tolist()
     return {"params": req.params, "results": rows}

@@ -60,27 +60,6 @@ jobs:
           name: coverage
           path: backend/coverage.xml
 
-  tasks:
-    # Your hands-on tasks fail until implemented, so this job never blocks CI: it just reports.
-    name: Task scoreboard (informational)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/pyproject.toml
-      - run: pip install -e ".[test]"
-      - run: pytest -m task --junitxml=tasks.xml -q || true
-      - run: python scripts/task_scoreboard.py tasks.xml | tee -a "$GITHUB_STEP_SUMMARY"
-
   frontend:
     name: Frontend · lint, types, tests, build
     runs-on: ubuntu-latest

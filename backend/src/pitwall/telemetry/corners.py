@@ -1,4 +1,4 @@
-"""Corner-by-corner analysis (TASK 1, docs/tasks/01-corner-analysis.md).
+"""Corner-by-corner analysis.
 
 Corner positions come from the MultiViewer circuit API [D3] (hand-made, "sufficient for
 visualization" per FastF1's docs); they're mapped to lap distance by nearest XY point [M3],
@@ -30,19 +30,39 @@ def locate_corners(circuit: dict | None, cmp: pd.DataFrame) -> pd.DataFrame:
 def corner_analysis(
     cmp: pd.DataFrame, corners: pd.DataFrame, window_m: float = 250.0
 ) -> pd.DataFrame:
-    """Per-corner comparison of two drivers.
+    """Per-corner comparison of two drivers on a `compare_laps` frame.
 
-    Args:
-        cmp: output of `compare_laps` (distance, speed_a/b, throttle_a/b, brake_a/b, time_a/b ...).
-        corners: output of `locate_corners`, with at least `number` and `distance` (apex, m).
-        window_m: how far before the apex to look for the braking point.
-
-    Returns:
-        One row per corner with columns:
-            corner            int    corner number
-            apex_m            float  apex distance
-            min_speed_a/_b    float  minimum speed in the corner zone (km/h)
-            brake_point_a/_b  float  where braking starts before the apex (m), NaN if no braking
-            time_gain_b_s     float  time B gains vs A through the corner zone (> 0: B faster)
+    The corner zone is apex ± `window_m`; the braking point is searched before the apex only.
+    Returns one row per corner: corner, apex_m, min_speed_a/_b (km/h), brake_point_a/_b
+    (m, NaN if the driver never brakes on entry) and time_gain_b_s (> 0: B faster).
     """
-    raise NotImplementedError("TASK 1: see docs/tasks/01-corner-analysis.md")
+    d = cmp["distance"].to_numpy(float)
+    rows = []
+    for number, apex in zip(corners["number"].tolist(), corners["distance"].tolist(), strict=True):
+        lo, hi = max(apex - window_m, d[0]), min(apex + window_m, d[-1])
+        zone = (d >= lo) & (d <= hi)
+        entry = (d >= lo) & (d <= apex)
+        row: dict[str, float] = {"corner": int(number), "apex_m": apex}
+        spent = {}
+        for s in "ab":
+            row[f"min_speed_{s}"] = float(cmp.loc[zone, f"speed_{s}"].min())
+            braking = d[entry & cmp[f"brake_{s}"].to_numpy(bool)]
+            row[f"brake_point_{s}"] = float(braking[0]) if braking.size else float("nan")
+            # interpolate at the exact zone edges so the result doesn't depend on grid alignment
+            t_lo, t_hi = np.interp([lo, hi], d, cmp[f"time_{s}"].to_numpy(float))
+            spent[s] = t_hi - t_lo
+        row["time_gain_b_s"] = float(spent["a"] - spent["b"])
+        rows.append(row)
+    out = pd.DataFrame(
+        rows,
+        columns=[
+            "corner",
+            "apex_m",
+            "min_speed_a",
+            "min_speed_b",
+            "brake_point_a",
+            "brake_point_b",
+            "time_gain_b_s",
+        ],
+    )
+    return out.astype({"corner": int})

@@ -99,7 +99,7 @@ export function StrategyPage() {
         </div>
         <p className="muted">
           Fits the linear degradation model on {raceLabel || 'the selected race'}'s green-flag laps and takes the
-          circuit's pit loss. Cliffs still come from defaults until TASK 2.
+          circuit's pit loss. Cliff ages are replaced where the race shows one in at least three stints.
         </p>
       </section>
 
@@ -216,6 +216,9 @@ function Results({ result }: { result: OptimizeResponse }) {
                   P10 to P90 vs best (s)
                 </th>
                 <th title="Share of simulated races where this strategy was the fastest">P(best)</th>
+                <th title="Mean time saved by pitting early when a safety car comes out within 6 laps before a planned stop">
+                  SC reaction (s)
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -238,6 +241,10 @@ function Results({ result }: { result: OptimizeResponse }) {
                       <div style={{ width: `${r.p_best * 100}%` }} />
                       <span>{(r.p_best * 100).toFixed(1)}%</span>
                     </div>
+                  </td>
+                  <td>
+                    {r.reactive_gain_s >= 0 ? '-' : '+'}
+                    {Math.abs(r.reactive_gain_s).toFixed(2)}
                   </td>
                 </tr>
               ))}

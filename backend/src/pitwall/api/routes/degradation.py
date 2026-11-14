@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 
 from pitwall.api.utils import get_session, records
 from pitwall.data.laps import green_flag_laps, race_laps
-from pitwall.models.tyre_deg import LinearDegradationModel
+from pitwall.models.tyre_deg import LinearDegradationModel, cliff_ages
 
 router = APIRouter(tags=["degradation"])
 
@@ -36,6 +36,8 @@ def degradation(session_key: int) -> dict:
         "session": session.name,
         "model": model.to_dict(),
         "curves": curves,
+        "cliffs": cliff_ages(laps, model),
+        "laps_per_compound": laps["compound"].value_counts().to_dict(),
         "points": records(
             laps[
                 [

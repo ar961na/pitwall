@@ -14,13 +14,14 @@ def params_from_degradation(
     model: LinearDegradationModel,
     total_laps: int,
     driver: str | None = None,
+    cliffs: dict[str, int] | None = None,
     **overrides,
 ) -> RaceParams:
     """Simulator params for `driver` (or the median car) from a fitted degradation model.
 
     Compounds that weren't raced (or fitted to a nonsensical negative degradation) fall back
-    to the defaults, shifted onto this race's pace scale. Cliffs aren't estimated by the
-    linear model, so they come from the defaults until TASK 2 replaces that with detected cliffs.
+    to the defaults, shifted onto this race's pace scale. `cliffs` (from `cliff_ages`) replaces
+    the illustrative default cliff age for the compounds where one was detected.
     """
     offsets = model.driver_offset
     driver_offset = offsets[driver] if driver else float(np.median(list(offsets.values())))
@@ -38,6 +39,9 @@ def params_from_degradation(
             compounds[name] = default.model_copy(
                 update={"offset_s": model.compound_offset[name], "deg_s_per_lap": deg}
             )
+
+    for name, age in (cliffs or {}).items():
+        compounds[name] = compounds[name].model_copy(update={"cliff_age": age})
 
     return RaceParams(
         total_laps=total_laps,

@@ -56,8 +56,7 @@ export interface CompareResponse {
   channels: Record<string, (number | boolean | null)[]>
   minisectors: Minisector[]
   corners: Corner[]
-  corner_analysis: CornerRow[] | null
-  corner_analysis_status: string
+  corner_analysis: CornerRow[]
 }
 
 export type Compound = 'SOFT' | 'MEDIUM' | 'HARD'
@@ -96,6 +95,7 @@ export interface StrategyResult {
   p_best: number
   gap_s: number
   expected_no_sc_s: number
+  reactive_gain_s: number
   clean_lap_times_s?: number[]
 }
 
@@ -124,6 +124,8 @@ export interface DegradationResponse {
     n_laps: number
   }
   curves: Record<string, { tyre_life: number[]; corrected_s: number[] }>
+  cliffs: Record<string, number>
+  laps_per_compound: Record<string, number>
   points: {
     driver: string
     team: string

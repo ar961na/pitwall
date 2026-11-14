@@ -4,7 +4,7 @@ import { api } from '../api/client'
 import type { CompareResponse, Driver } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { TrackMap } from '../components/TrackMap'
-import { Card, Empty, SeriesLegend, Status, TaskCallout } from '../components/ui'
+import { Card, Empty, SeriesLegend, Status } from '../components/ui'
 import { formatLapTime, MISSING, SERIES_DASH } from '../lib/format'
 import { useApi } from '../hooks/useApi'
 
@@ -174,16 +174,12 @@ export function TelemetryPage() {
           </Card>
 
           <Card title="Corner by corner">
-            {data.corner_analysis ? (
+            {data.corner_analysis.length ? (
               <div className="table-wrap">
                 <CornerTable rows={data.corner_analysis} a={data.a.driver} b={data.b.driver} />
               </div>
             ) : (
-              <TaskCallout task="TASK 1: corner analysis">
-                The backend replied: <code>{data.corner_analysis_status}</code>. Implement{' '}
-                <code>corner_analysis()</code> in <code>backend/src/pitwall/telemetry/corners.py</code> and this table
-                fills in.
-              </TaskCallout>
+              <Empty>No corner positions are published for this circuit yet.</Empty>
             )}
           </Card>
         </>

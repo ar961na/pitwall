@@ -36,11 +36,10 @@ packages = ["src/pitwall"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# Task tests and network tests are opt-in:  pytest -m task   /   pytest -m network
-addopts = "-q -ra --strict-markers -m 'not network and not task'"
+# Network tests are opt-in:  pytest -m network
+addopts = "-q -ra --strict-markers -m 'not network'"
 markers = [
   "network: needs internet access (OpenF1 / Jolpica downloads)",
-  "task: checks for the hands-on tasks in docs/tasks; they fail until you implement them",
 ]
 
 [tool.ruff]

@@ -1,12 +1,8 @@
-"""TASK 5 acceptance tests. Run:  pytest -m task tests/tasks/test_task5_features.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from pitwall.predict.features import build_features
-
-pytestmark = pytest.mark.task
 
 
 @pytest.fixture

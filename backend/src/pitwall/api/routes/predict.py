@@ -13,8 +13,6 @@ def predict(year: int, event: str) -> dict:
     if not MODEL_PATH.exists():
         raise HTTPException(
             501,
-            "No trained race predictor yet. Train one in TASK 5 (docs/tasks/05-race-predictor.md)",
+            "No trained race predictor yet (see docs/ROADMAP.md)",
         )
-    raise HTTPException(
-        501, "Model file found but inference is not wired up yet (TASK 5, final step)"
-    )
+    raise HTTPException(501, "Model file found but inference is not wired up yet")

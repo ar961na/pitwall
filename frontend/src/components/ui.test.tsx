@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { formatLapTime } from '../lib/format'
-import { CompoundChip, TaskCallout } from './ui'
+import { CompoundChip } from './ui'
 
 describe('formatLapTime', () => {
   it('formats seconds as m:ss.mmm', () => {
@@ -15,12 +15,5 @@ describe('CompoundChip', () => {
     render(<CompoundChip compound="MEDIUM" laps={25} />)
     expect(screen.getByText('M')).toBeInTheDocument()
     expect(screen.getByText('25')).toBeInTheDocument()
-  })
-})
-
-describe('TaskCallout', () => {
-  it('renders the task name', () => {
-    render(<TaskCallout task="TASK 1">do it</TaskCallout>)
-    expect(screen.getByText(/TASK 1/)).toBeInTheDocument()
   })
 })

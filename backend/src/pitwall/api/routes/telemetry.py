@@ -24,10 +24,6 @@ def compare(
         raise HTTPException(404, str(e)) from e
 
     corners = locate_corners(circuit_info(session.info["circuit_key"], session.info["year"]), cmp)
-    try:
-        corner_table, corner_status = records(corner_analysis(cmp, corners)), "ok"
-    except NotImplementedError as e:
-        corner_table, corner_status = None, str(e)
 
     def lap_info(code, lap) -> dict:
         return {
@@ -43,6 +39,5 @@ def compare(
         "channels": columns(cmp),
         "minisectors": records(minisector_dominance(cmp)),
         "corners": records(corners),
-        "corner_analysis": corner_table,
-        "corner_analysis_status": corner_status,
+        "corner_analysis": records(corner_analysis(cmp, corners)),
     }
