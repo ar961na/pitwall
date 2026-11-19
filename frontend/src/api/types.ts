@@ -196,3 +196,22 @@ export interface PaceModelResponse {
   curves: Record<string, PaceCurve>
   metrics: Record<string, number | string | number[]>
 }
+
+export interface StintForecastLap {
+  driver: string
+  stint: number
+  compound: string
+  lap: number
+  actual: number
+  gru: number
+  persistence: number
+}
+
+export interface StintForecastResponse {
+  session: string
+  driver: string
+  in_training_data: boolean
+  mae: { gru: number | null; persistence: number | null }
+  model: Record<string, number | string>
+  laps: StintForecastLap[]
+}

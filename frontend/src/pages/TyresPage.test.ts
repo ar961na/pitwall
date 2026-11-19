@@ -39,3 +39,13 @@ describe('bandRows', () => {
     ])
   })
 })
+
+describe('withGaps', () => {
+  it('breaks the line between non-consecutive laps', async () => {
+    const { withGaps } = await import('./TyresPage')
+    const lap = (n: number) => ({ driver: 'X', stint: 1, compound: 'SOFT', lap: n, actual: 0, gru: 0, persistence: 0 })
+    const rows = withGaps([lap(9), lap(10), lap(30)])
+    expect(rows.map((r) => r.lap)).toEqual([9, 10, 29.5, 30])
+    expect(rows[2].actual).toBeNull()
+  })
+})

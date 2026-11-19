@@ -16,6 +16,7 @@ import type {
   OptimizeRequest,
   OptimizeResponse,
   PaceModelResponse,
+  StintForecastResponse,
   Prediction,
   PredictRound,
   RaceParams,
@@ -59,6 +60,8 @@ export const api = {
   drivers: (sessionKey: number) => request<Driver[]>(`/sessions/${sessionKey}/drivers`),
   compare: (sessionKey: number, a: string, b: string) =>
     request<CompareResponse>(`/sessions/${sessionKey}/compare?a=${a}&b=${b}`),
+  stintForecast: (sessionKey: number, driver: string) =>
+    request<StintForecastResponse>(`/sessions/${sessionKey}/stint-forecast?driver=${driver}`),
   paceModel: (sessionKey: number) => request<PaceModelResponse>(`/sessions/${sessionKey}/pace-model`),
   degradation: (sessionKey: number) => request<DegradationResponse>(`/sessions/${sessionKey}/degradation`),
   strategyDefaults: async () => {

@@ -11,6 +11,7 @@ train/validation split [M13]. Needs the optional `dl` extra (PyTorch).
 
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -189,5 +190,68 @@ def train(
         "epochs": len(history),
         "best_val_huber": float(best),
         "device": str(device),
+        # races after this instant were never seen in training (empty if no date column)
+        "train_until": str(train_df["date_start"].max()) if "date_start" in train_df else "",
     }
     return trained
+
+
+MODEL_FILE = "stint_gru.pt"
+
+
+def save(trained: TrainedForecaster, path: Path) -> None:
+    """Plain tensors and numbers only, so loading works with torch.load(weights_only=True)."""
+    torch.save(
+        {
+            "state_dict": trained.model.state_dict(),
+            "scaler_mean": torch.tensor(trained.scaler.mean),
+            "scaler_std": torch.tensor(trained.scaler.std),
+            "hidden": trained.model.gru.hidden_size,
+            "metrics": {
+                k: v for k, v in trained.metrics.items() if isinstance(v, int | float | str)
+            },
+        },
+        path,
+    )
+
+
+def load_forecaster(path: Path) -> TrainedForecaster:
+    ckpt = torch.load(path, map_location="cpu", weights_only=True)
+    model = StintForecaster(len(SEQ_FEATURES), hidden=int(ckpt["hidden"]))
+    model.load_state_dict(ckpt["state_dict"])
+    scaler = Scaler(ckpt["scaler_mean"].numpy(), ckpt["scaler_std"].numpy())
+    return TrainedForecaster(model, scaler, dict(ckpt["metrics"]))
+
+
+def backtest(trained: TrainedForecaster, laps: pd.DataFrame) -> pd.DataFrame:
+    """One-lap-ahead forecasts for every lap that has CONTEXT consecutive laps before it.
+
+    `laps` are one race's green-flag laps with TARGET (see pace_gbm.add_target). Returns
+    driver, stint, lap, actual, gru and persistence (seconds relative to the driver's median).
+    """
+    df = stint_frame(laps)
+    rows = []
+    for _, stint in df.groupby("stint_id", sort=False):
+        values = stint[SEQ_FEATURES].to_numpy(np.float32)
+        if len(values) <= CONTEXT:
+            continue
+        x = np.stack([values[i - CONTEXT : i] for i in range(CONTEXT, len(values))])
+        target = stint.iloc[CONTEXT:]
+        rows.append(
+            pd.DataFrame(
+                {
+                    "driver": target["driver"].to_numpy(),
+                    "stint": target["stint"].to_numpy(),
+                    "compound": target["compound"].to_numpy(),
+                    "lap": target["lap"].to_numpy(),
+                    "actual": target[TARGET].to_numpy(),
+                    "gru": trained.predict(x)[:, 0],
+                    "persistence": persistence(x)[:, 0],
+                }
+            )
+        )
+    if not rows:
+        return pd.DataFrame(
+            columns=["driver", "stint", "compound", "lap", "actual", "gru", "persistence"]
+        )
+    return pd.concat(rows, ignore_index=True)

@@ -61,3 +61,27 @@ def test_pace_model_without_file_is_503(monkeypatch, tmp_path):
     r = client.get("/api/sessions/1/pace-model")
     assert r.status_code == 503
     assert "train-pace" in r.json()["detail"]
+
+
+def test_stint_forecast_without_model_is_503(monkeypatch, tmp_path):
+    from pitwall.config import settings
+
+    monkeypatch.setattr(settings, "models_dir", tmp_path)
+    r = client.get("/api/sessions/1/stint-forecast?driver=VER")
+    assert r.status_code == 503
+    assert "stint forecaster" in r.json()["detail"]
+
+
+def test_stint_forecast_without_torch_is_503(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_torch(name, *args, **kwargs):
+        if name == "torch" or name.startswith("pitwall.dl.stint_model"):
+            raise ImportError("No module named 'torch'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+    r = client.get("/api/sessions/1/stint-forecast?driver=VER")
+    assert r.status_code == 503

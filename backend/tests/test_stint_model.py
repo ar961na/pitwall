@@ -68,3 +68,25 @@ def test_training_beats_persistence(monkeypatch):
     assert m["mae_gru_s"] < m["mae_persistence_s"]
     x = np.zeros((2, stint_model.CONTEXT, len(SEQ_FEATURES)), np.float32)
     assert model.predict(x).shape == (2, stint_model.HORIZON)
+
+
+def test_save_load_and_backtest(tmp_path):
+    from pitwall.models.pace_gbm import add_target
+
+    trained = stint_model.train(fake_laps(), epochs=3, device=torch.device("cpu"))
+    path = tmp_path / "gru.pt"
+    stint_model.save(trained, path)
+    loaded = stint_model.load_forecaster(path)
+    x = (
+        np.random.default_rng(0)
+        .normal(size=(4, stint_model.CONTEXT, len(SEQ_FEATURES)))
+        .astype(np.float32)
+    )
+    assert np.allclose(loaded.predict(x), trained.predict(x), atol=1e-5)
+
+    race = fake_laps(n_races=1).assign(total_laps=40)
+    race = add_target(race.drop(columns=[TARGET]).assign(lap_time_s=90 + race[TARGET]))
+    out = stint_model.backtest(loaded, race[race["driver"] == "D0"])
+    # two 20-lap stints, each forecasting laps 9..20 of the stint
+    assert len(out) == 2 * (20 - stint_model.CONTEXT)
+    assert {"actual", "gru", "persistence", "lap"} <= set(out.columns)

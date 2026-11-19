@@ -12,11 +12,11 @@ import {
   YAxis,
 } from 'recharts'
 import { api } from '../api/client'
-import type { DegradationResponse, PaceModelResponse } from '../api/types'
+import type { DegradationResponse, PaceModelResponse, StintForecastResponse } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
-import { Card, CompoundChip, Empty, Status } from '../components/ui'
+import { Card, CompoundChip, Empty, SeriesLegend, Status } from '../components/ui'
 import { useApi } from '../hooks/useApi'
-import { COMPOUND_COLORS, MISSING } from '../lib/format'
+import { COMPOUND_COLORS, MISSING, SERIES_DASH } from '../lib/format'
 
 const ORDER = ['SOFT', 'MEDIUM', 'HARD']
 // A different marker per compound, so the plot does not rely on colour alone.
@@ -40,6 +40,10 @@ export function TyresPage() {
   const [driver, setDriver] = useState('')
   const deg = useApi(sessionKey ? () => api.degradation(sessionKey) : null, [sessionKey])
   const pace = useApi(sessionKey ? () => api.paceModel(sessionKey) : null, [sessionKey])
+  const forecast = useApi(sessionKey && driver ? () => api.stintForecast(sessionKey, driver) : null, [
+    sessionKey,
+    driver,
+  ])
   const data = deg.data
 
   const drivers = useMemo(() => [...new Set((data?.points ?? []).map((p) => p.driver))].sort(), [data])
@@ -197,6 +201,9 @@ export function TyresPage() {
         </div>
       )}
 
+      {data && driver && (
+        <StintForecastCard forecast={forecast.data} loading={forecast.loading} error={forecast.error} />
+      )}
       {data && <PaceModelCard pace={pace.data} loading={pace.loading} error={pace.error} />}
     </div>
   )
@@ -320,6 +327,111 @@ function PaceModelCard({ pace, loading, error }: { pace?: PaceModelResponse; loa
           </p>
         </div>
       </div>
+    </Card>
+  )
+}
+
+type GapRow = { lap: number; actual: number | null; gru: number | null; persistence: number | null }
+
+/** Insert an empty row wherever laps are not consecutive, so lines break at stops and gaps. */
+export function withGaps(laps: StintForecastResponse['laps']): GapRow[] {
+  const out: GapRow[] = []
+  laps.forEach((l, i) => {
+    if (i > 0 && l.lap - laps[i - 1].lap > 1) out.push({ lap: l.lap - 0.5, actual: null, gru: null, persistence: null })
+    out.push({ lap: l.lap, actual: l.actual, gru: l.gru, persistence: l.persistence })
+  })
+  return out
+}
+
+function StintForecastCard({
+  forecast,
+  loading,
+  error,
+}: {
+  forecast?: StintForecastResponse
+  loading: boolean
+  error?: string
+}) {
+  if (loading) return <Status loading hint="Running the stint forecaster…" />
+  if (!forecast)
+    return (
+      <Card title="Next-lap forecast">
+        <Empty>
+          {error?.includes('stint forecaster')
+            ? 'The stint forecaster is not available on this server (it needs PyTorch and make train-stint).'
+            : (error ?? 'No forecast for this driver.')}
+        </Empty>
+      </Card>
+    )
+  const m = forecast.model
+  const fmt = (v: number | null) => (v === null ? MISSING : `${v.toFixed(3)} s`)
+  return (
+    <Card title={`Next-lap forecast for ${forecast.driver}`}>
+      <SeriesLegend
+        items={[
+          { label: 'Actual', color: 'var(--text)' },
+          { label: 'GRU forecast', color: 'var(--series-1)' },
+          { label: 'Repeat last lap', color: 'var(--series-2)' },
+        ]}
+      />
+      {forecast.laps.length ? (
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={withGaps(forecast.laps)} margin={{ top: 8, right: 8, bottom: 16, left: 8 }}>
+            <CartesianGrid stroke="var(--chart-grid)" />
+            <XAxis
+              dataKey="lap"
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              label={{ value: 'Lap', position: 'insideBottom', offset: -12, ...LABEL }}
+              {...AXIS}
+            />
+            <YAxis
+              domain={['auto', 'auto']}
+              width={56}
+              tickFormatter={(v) => Number(v).toFixed(1)}
+              label={{ value: 'vs median (s)', angle: -90, position: 'insideLeft', ...LABEL }}
+              {...AXIS}
+            />
+            <Tooltip
+              contentStyle={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+              labelFormatter={(lap) => `Lap ${lap}`}
+              formatter={(v, name) => [`${Number(v).toFixed(3)} s`, String(name)]}
+            />
+            {(
+              [
+                ['actual', 'Actual', 'var(--text)'],
+                ['gru', 'GRU forecast', 'var(--series-1)'],
+                ['persistence', 'Repeat last lap', 'var(--series-2)'],
+              ] as const
+            ).map(([key, name, color], i) => (
+              <Line
+                key={key}
+                dataKey={key}
+                name={name}
+                stroke={color}
+                strokeDasharray={SERIES_DASH[i]}
+                strokeWidth={i === 0 ? 2 : 1.5}
+                dot={false}
+                connectNulls={false}
+                isAnimationActive={false}
+              />
+            ))}
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <Empty>No stint of this driver has the 9 consecutive green-flag laps a forecast needs.</Empty>
+      )}
+      <p>
+        Mean error on this driver's laps: GRU {fmt(forecast.mae.gru)}, repeating the last lap{' '}
+        {fmt(forecast.mae.persistence)}.
+        {forecast.in_training_data && ' This race was in the training data, so this is not a fair test.'}
+      </p>
+      <p className="muted">
+        A GRU reads the previous 8 laps of a stint and predicts the next one. Across all held-out races it is 13% more
+        accurate than repeating the last lap ({Number(m.mae_gru_s).toFixed(3)} s vs{' '}
+        {Number(m.mae_persistence_s).toFixed(3)} s); on a single driver the two are often close. Laps after a pit stop,
+        safety car or outlier start a new stretch, so gaps in the line are expected.
+      </p>
     </Card>
   )
 }

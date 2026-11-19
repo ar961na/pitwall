@@ -21,12 +21,13 @@
   race fit is missing or implausible. Its compound offsets are not used: it barely separates
   compounds' fresh-tyre pace (within 0.15 s), since compound choice is tied up with strategy
 - Stint forecaster: GRU over the last 8 laps predicting the next 3. On the latest 20% of races:
-  MAE 0.434 s vs 0.500 s for repeating the last lap and 0.666 s for a straight-line trend
+  MAE 0.434 s vs 0.500 s for repeating the last lap and 0.666 s for a straight-line trend.
+  The Tyres page shows its next-lap forecasts for a selected driver; per driver it is often
+  level with repeating the last lap, so the gain is a fleet-wide average
 - CI/CD: tests, type checks, Docker smoke test, GitHub Pages demo, GHCR images
 
 ## Next
 
-1. Use the stint forecaster in the app (per-stint forecasts on the Tyres page)
-2. Compare the stint forecaster with the pace model on the same future laps
-3. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
-4. Dependabot: config trimmed (on the PR branch); merge #20, #15 and #4 (TypeScript 7) separately
+1. Compare the stint forecaster with the pace model on the same future laps
+2. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
+3. Dependabot: config trimmed (on the PR branch); merge #20, #15 and #4 (TypeScript 7) separately

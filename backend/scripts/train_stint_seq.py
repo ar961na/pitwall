@@ -1,4 +1,4 @@
-"""Train the GRU stint forecaster on the cached lap table and save models/stint_gru.pt.
+"""Train the GRU stint forecaster on the cached lap table and save it to models/.
 
 python scripts/train_pace_gbm.py        # builds data/pace_<first>_<last>.parquet first
 python scripts/train_stint_seq.py --years 2023 2026 --epochs 40
@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 
 from pitwall.config import settings
-from pitwall.dl.stint_model import train
+from pitwall.dl.stint_model import MODEL_FILE, save, train
 
 
 def main() -> None:
@@ -31,12 +31,9 @@ def main() -> None:
     laps = pd.read_parquet(table)
     device = None if args.gpu else torch.device("cpu")
     model = train(laps, epochs=args.epochs, lr=args.lr, device=device)
-    out = settings.models_dir / "stint_gru.pt"
+    out = settings.models_dir / MODEL_FILE
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(
-        {"state_dict": model.model.state_dict(), "scaler": model.scaler, "metrics": model.metrics},
-        out,
-    )
+    save(model, out)
     print(json.dumps(model.metrics, indent=2))
 
 
