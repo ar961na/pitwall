@@ -17,15 +17,16 @@
 - Pace model: LightGBM quantile models across 89 races (2023-2026). On 65,234 held-out laps:
   MAE 0.606 s vs 0.618 s for a pooled linear model; the 80% interval, after conformal
   calibration, covers 82.8% (64% before). The Tyres page shows its expected pace by tyre age
-  with that range
+  with that range, and strategy calibration takes its degradation rate for compounds whose
+  race fit is missing or implausible. Its compound offsets are not used: it barely separates
+  compounds' fresh-tyre pace (within 0.15 s), since compound choice is tied up with strategy
 - Stint forecaster: GRU over the last 8 laps predicting the next 3. On the latest 20% of races:
   MAE 0.434 s vs 0.500 s for repeating the last lap and 0.666 s for a straight-line trend
 - CI/CD: tests, type checks, Docker smoke test, GitHub Pages demo, GHCR images
 
 ## Next
 
-1. Use the pace model and stint forecaster in strategy calibration (the Tyres page already shows
-   the pace model)
+1. Use the stint forecaster in the app (per-stint forecasts on the Tyres page)
 2. Compare the stint forecaster with the pace model on the same future laps
 3. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
 4. Dependabot: config trimmed (on the PR branch); merge #20, #15 and #4 (TypeScript 7) separately

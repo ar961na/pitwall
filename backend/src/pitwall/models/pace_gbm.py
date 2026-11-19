@@ -267,3 +267,25 @@ def tyre_curves(model: PaceModel, circuit: str, total_laps: int, max_age: dict[s
         pred = model.predict(probe).round(4)
         out[compound] = {"tyre_life": ages.tolist(), **{k: pred[k].tolist() for k in pred.columns}}
     return out
+
+
+# Tyre ages used to turn the model's curve into a line (offset + slope). Assumption: 20 laps
+# covers a typical stint before any cliff, which the simulator models separately.
+LINEAR_FIT_AGES = 20
+
+
+def tyre_terms(model: PaceModel, circuit: str, total_laps: int) -> dict[str, tuple[float, float]]:
+    """(offset_s at age 0 relative to MEDIUM, deg_s_per_lap) per compound from the model's curves.
+
+    Within a stint tyre age and race progress rise together, so a tree model can attribute part
+    of the wear to fuel burn; read these as rough rates, not clean causal effects.
+    """
+    curves = tyre_curves(
+        model, circuit, total_laps, dict.fromkeys(("SOFT", "MEDIUM", "HARD"), LINEAR_FIT_AGES)
+    )
+    lines = {}
+    for compound, curve in curves.items():
+        slope, intercept = np.polyfit(curve["tyre_life"], curve["median"], 1)
+        lines[compound] = (float(intercept), float(slope))
+    ref = lines["MEDIUM"][0]
+    return {c: (off - ref, deg) for c, (off, deg) in lines.items()}

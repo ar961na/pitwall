@@ -117,3 +117,10 @@ def test_tyre_curves_and_loading(laps, tmp_path):
     path = tmp_path / "pace.joblib"
     joblib.dump(model, path)
     assert pace_gbm.load_model(path).categories == model.categories
+
+
+def test_tyre_terms_are_relative_to_medium(laps):
+    terms = pace_gbm.tyre_terms(PaceModel.fit(laps), "c0", 50)
+    assert set(terms) == {"SOFT", "MEDIUM", "HARD"}
+    assert terms["MEDIUM"][0] == pytest.approx(0.0)
+    assert all(np.isfinite(v).all() for v in map(np.array, terms.values()))

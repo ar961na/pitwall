@@ -43,3 +43,7 @@ class RaceParams(BaseModel):
     sc_pit_loss_factor: float = Field(0.45, description="Pitting under SC costs this fraction")
     lap_noise_s: float = Field(0.25, ge=0, description="Std of random lap-to-lap variation")
     compounds: dict[str, CompoundParams] = Field(default_factory=lambda: dict(DEFAULT_COMPOUNDS))
+    tyre_source: dict[str, str] = Field(
+        default_factory=dict,
+        description="Where each compound's degradation came from: race, pace_model or default",
+    )

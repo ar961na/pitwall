@@ -23,6 +23,8 @@ const RACE_FIELDS: [keyof RaceParams, string, number][] = [
   ['sc_pit_loss_factor', 'Pit loss under SC (×)', 0.05],
   ['lap_noise_s', 'Lap noise σ (s)', 0.05],
 ]
+const SOURCE_TEXT = { race: 'this race', pace_model: 'all races', default: 'default' } as const
+
 const COMPOUND_FIELDS: [keyof CompoundParams, string, number][] = [
   ['offset_s', 'Offset (s)', 0.05],
   ['deg_s_per_lap', 'Deg (s/lap)', 0.005],
@@ -101,7 +103,8 @@ export function StrategyPage() {
         </div>
         <p className="muted">
           Fits the linear degradation model on {raceLabel || 'the selected race'}'s green-flag laps and takes the
-          circuit's pit loss. Cliff ages are replaced where the race shows one in at least three stints.
+          circuit's pit loss. Cliff ages are replaced where the race shows one in at least three stints. A compound the
+          race did not use, or whose fit makes no physical sense, takes its degradation from the multi-race pace model.
         </p>
       </section>
 
@@ -140,6 +143,9 @@ export function StrategyPage() {
                     <tr key={name}>
                       <td>
                         <CompoundChip compound={name} />
+                        {params.tyre_source && (
+                          <div className="muted small">{SOURCE_TEXT[params.tyre_source[name] ?? 'default']}</div>
+                        )}
                       </td>
                       {COMPOUND_FIELDS.map(([key, , step]) => (
                         <td key={key}>

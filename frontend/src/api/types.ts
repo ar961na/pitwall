@@ -82,6 +82,8 @@ export interface RaceParams {
   sc_pit_loss_factor: number
   lap_noise_s: number
   compounds: Record<string, CompoundParams>
+  // where each compound's degradation came from, after calibration
+  tyre_source?: Record<string, 'race' | 'pace_model' | 'default'>
 }
 
 export interface StrategyResult {

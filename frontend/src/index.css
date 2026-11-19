@@ -429,3 +429,7 @@ td.bad {
   border-left: 4px solid var(--accent);
   border-radius: var(--radius);
 }
+
+.small {
+  font-size: var(--text-xs);
+}
