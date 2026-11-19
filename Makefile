@@ -1,5 +1,5 @@
 # Shortcuts. Local targets assume `micromamba activate pitwall`.
-.PHONY: env api web test test-network lint fmt mlflow train-predictor up down docker-test smoke demo
+.PHONY: env api web test test-network lint fmt mlflow train-predictor train-pace train-stint up down docker-test smoke demo
 
 env:            ## create the micromamba env (Python + Node + PyTorch/MPS)
 	micromamba create -f environment.yml -y
@@ -27,6 +27,12 @@ fmt:
 
 train-predictor: ## fit the race predictor on Jolpica history (about 2 min the first time)
 	cd backend && python scripts/train_race_predictor.py
+
+train-pace:     ## fit the quantile pace model (first run downloads about 90 races, ~25 min)
+	cd backend && python scripts/train_pace_gbm.py
+
+train-stint:    ## fit the GRU stint forecaster (needs train-pace's lap table)
+	cd backend && python scripts/train_stint_seq.py
 
 mlflow:         ## experiment UI on :5000
 	mlflow ui --backend-store-uri sqlite:///mlflow.db

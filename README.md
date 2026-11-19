@@ -90,6 +90,8 @@ network on 2026-10-03. Raw data is never committed to this repo.
   Heilmeier et al. (2018) [M5, M6]; breakpoint regression for the cliff [M7, M8].
 - Strategy: lap-by-lap Monte Carlo race simulation after Heilmeier et al. (2020) [M17], with
   common random numbers for variance reduction [M18].
+- Pace: LightGBM quantile models with conformal calibration [M9, M10, M28]; a GRU stint
+  forecaster [M24] that beats repeating the last lap by 13%.
 - Prediction: LightGBM [M9], LambdaMART ranking [M21], time-ordered CV [M13], leakage checks
   [M14], Brier score and calibration [M15, M16], sequence models in PyTorch [M24 to M26].
 

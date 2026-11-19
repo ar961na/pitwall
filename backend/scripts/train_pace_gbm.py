@@ -50,6 +50,7 @@ def main() -> None:
         "n_laps": len(df),
         "n_races": int(df["session_key"].nunique()),
         "years": [min(args.years), max(args.years)],
+        "margin_s": model.margin,
         "trained_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
     }
     out = settings.models_dir / "pace_gbm.joblib"

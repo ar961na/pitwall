@@ -13,11 +13,17 @@
   variants, served from `/api/predict`, Predict page, included in the Pages demo. On 226
   held-out races it beats grid order on rank correlation (0.66 vs 0.62) and ties it on picking
   the winner (55%).
+- Pace model: LightGBM quantile models across 89 races (2023-2026). On 65,234 held-out laps:
+  MAE 0.606 s vs 0.618 s for a pooled linear model; the 80% interval, after conformal
+  calibration, covers 82.8% (64% before)
+- Stint forecaster: GRU over the last 8 laps predicting the next 3. On the latest 20% of races:
+  MAE 0.434 s vs 0.500 s for repeating the last lap and 0.666 s for a straight-line trend
 - CI/CD: tests, type checks, Docker smoke test, GitHub Pages demo, GHCR images
 
 ## Next
 
-1. Multi-race LightGBM pace model with quantile intervals, compared with the per-race linear model
-2. Stint sequence model (PyTorch) compared with persistence and the pace model
-4. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
+1. Use the pace model and stint forecaster in the app (Tyres page overlay, strategy calibration)
+2. Compare the stint forecaster with the pace model on the same future laps
+3. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
+4. Corner detection from speed minima for circuits without published corner data [M4]
 5. Triage the open Dependabot PRs (several are major version bumps)

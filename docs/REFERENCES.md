@@ -43,9 +43,9 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 | **M6** | Ordinary least squares with fixed effects (driver dummies) | Wooldridge, J. M. (2010). *Econometric Analysis of Cross Section and Panel Data*, 2nd ed., MIT Press, ch. 10 | `models/tyre_deg.py::LinearDegradationModel` |
 | **M7** | Breakpoint ("hinge"/segmented) regression for the tyre cliff | Muggeo, V. M. R. (2003). *Estimating regression models with unknown break-points.* Statistics in Medicine 22(19):3055–3071. doi:[10.1002/sim.1545](https://doi.org/10.1002/sim.1545) | `models/tyre_deg.py::detect_cliff` |
 | **M8** | Testing for a breakpoint when it's only defined under the alternative (why a plain F-test after grid search is optimistic) | Davies, R. B. (1987). *Hypothesis testing when a nuisance parameter is present only under the alternative.* Biometrika 74(1):33–43. doi:[10.1093/biomet/74.1.33](https://doi.org/10.1093/biomet/74.1.33) | `models/tyre_deg.py::CLIFF_P_VALUE` |
-| **M9** | Gradient-boosted decision trees | Ke, G. et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree.* NeurIPS 30. https://papers.nips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html | `models/pace_gbm.py` (planned model), `predict/model.py` |
-| **M10** | Quantile regression / pinball loss for prediction intervals | Koenker, R. & Bassett, G. (1978). *Regression Quantiles.* Econometrica 46(1):33–50. doi:[10.2307/1913643](https://doi.org/10.2307/1913643) | pace model (planned) |
-| **M11** | Huber loss (less sensitive to outlier laps than squared error) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | pace and sequence models (planned) |
+| **M9** | Gradient-boosted decision trees | Ke, G. et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree.* NeurIPS 30. https://papers.nips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html | `models/pace_gbm.py`, `predict/model.py` |
+| **M10** | Quantile regression / pinball loss for prediction intervals | Koenker, R. & Bassett, G. (1978). *Regression Quantiles.* Econometrica 46(1):33–50. doi:[10.2307/1913643](https://doi.org/10.2307/1913643) | `models/pace_gbm.py` |
+| **M11** | Huber loss (less sensitive to outlier laps than squared error) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | `models/pace_gbm.py`, `dl/stint_model.py` |
 | **M12** | Mixed-effects models | Bates, D. et al. (2015). *Fitting Linear Mixed-Effects Models Using lme4.* J. Stat. Softw. 67(1). doi:[10.18637/jss.v067.i01](https://doi.org/10.18637/jss.v067.i01) | not used yet |
 
 ### Validation
@@ -73,10 +73,11 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 | **M21** | LambdaRank / LambdaMART (LightGBM `lambdarank`) | Burges, C. J. C. (2010). *From RankNet to LambdaRank to LambdaMART: An Overview.* Microsoft Research Tech. Report MSR-TR-2010-82 | `predict/model.py` |
 | **M22** | Listwise ranking loss (ListNet) and the Plackett–Luce model | Cao, Z. et al. (2007). *Learning to Rank: From Pairwise Approach to Listwise Approach.* ICML. doi:[10.1145/1273496.1273513](https://doi.org/10.1145/1273496.1273513) · Plackett, R. L. (1975). *The Analysis of Permutations.* JRSS C 24(2):193–202 | not used yet |
 | **M23** | Permutation-invariant set models | Zaheer, M. et al. (2017). *Deep Sets.* NeurIPS · Lee, J. et al. (2019). *Set Transformer.* ICML | not used yet |
-| **M24** | LSTM / GRU sequence models | Hochreiter, S. & Schmidhuber, J. (1997). *Long Short-Term Memory.* Neural Computation 9(8):1735–1780 · Cho, K. et al. (2014). *Learning Phrase Representations using RNN Encoder–Decoder.* EMNLP | sequence model (planned) |
-| **M25** | Transformer encoder | Vaswani, A. et al. (2017). *Attention Is All You Need.* NeurIPS | sequence model (planned) |
-| **M26** | AdamW optimiser | Loshchilov, I. & Hutter, F. (2019). *Decoupled Weight Decay Regularization.* ICLR | sequence model (planned) |
+| **M24** | LSTM / GRU sequence models | Hochreiter, S. & Schmidhuber, J. (1997). *Long Short-Term Memory.* Neural Computation 9(8):1735–1780 · Cho, K. et al. (2014). *Learning Phrase Representations using RNN Encoder–Decoder.* EMNLP | `dl/stint_model.py` |
+| **M25** | Transformer encoder | Vaswani, A. et al. (2017). *Attention Is All You Need.* NeurIPS | `dl/stint_model.py` |
+| **M26** | AdamW optimiser | Loshchilov, I. & Hutter, F. (2019). *Decoupled Weight Decay Regularization.* ICLR | `dl/stint_model.py` |
 | **M27** | Sampling finishing orders from a Plackett-Luce model by adding Gumbel noise to scores and sorting | Yellott, J. I. (1977). *The relationship between Luce's Choice Axiom, Thurstone's Theory of Comparative Judgment, and the double exponential distribution.* J. Math. Psychol. 15(2):109–144. doi:[10.1016/0022-2496(77)90026-8](https://doi.org/10.1016/0022-2496(77)90026-8) | `predict/model.py::sample_orders` |
+| **M28** | Conformalized quantile regression: widen quantile intervals by a margin measured on held-out data | Romano, Y., Patterson, E. & Candès, E. (2019). *Conformalized Quantile Regression.* NeurIPS 32. https://proceedings.neurips.cc/paper/2019/hash/5103c3584b063c431bd1268e9b5e76fb-Abstract.html | `models/pace_gbm.py::conformal_margin` |
 
 ## Software
 

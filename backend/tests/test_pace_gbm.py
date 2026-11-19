@@ -67,7 +67,8 @@ def test_add_target_centres_each_driver(laps):
 def test_cv_beats_baselines_and_intervals_cover(laps):
     m = evaluate(laps, n_splits=3)
     assert m["mae_gbm_s"] < m["mae_linear_s"] < m["mae_zero_s"]  # the cliff is not linear
-    assert 0.65 <= m["coverage_80"] <= 0.92
+    assert 0.65 <= m["coverage_80_conformal"] <= 0.95
+    assert m["coverage_80_conformal"] >= m["coverage_80_raw"]
     assert m["n_test_laps"] > 0
 
 
@@ -86,3 +87,13 @@ def test_unseen_circuit_still_predicts(laps):
     model = PaceModel.fit(laps)
     probe = laps.head(20).assign(circuit="brand_new_track")
     assert model.predict(probe).notna().all().all()
+
+
+def test_conformal_margin_restores_coverage():
+    rng = np.random.default_rng(0)
+    y = rng.normal(0, 2.0, 5000)
+    lo, hi = np.full_like(y, -1.0), np.full_like(y, 1.0)  # far too narrow for sd 2
+    margin = pace_gbm.conformal_margin(lo, hi, y, coverage=0.8)
+    covered = ((y >= lo - margin) & (y <= hi + margin)).mean()
+    assert covered == pytest.approx(0.8, abs=0.02)
+    assert pace_gbm.conformal_margin(lo * 10, hi * 10, y, coverage=0.8) < 0  # too wide: shrinks
