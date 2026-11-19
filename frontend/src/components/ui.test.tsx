@@ -17,3 +17,11 @@ describe('CompoundChip', () => {
     expect(screen.getByText('25')).toBeInTheDocument()
   })
 })
+
+describe('cornerLabel', () => {
+  it('labels published corners by number and letter, detected zones with B', async () => {
+    const { cornerLabel } = await import('../lib/format')
+    expect(cornerLabel({ number: 4, letter: 'A', source: 'published' })).toBe('4A')
+    expect(cornerLabel({ number: 3, letter: '', source: 'detected' })).toBe('B3')
+  })
+})

@@ -35,6 +35,8 @@ export interface LapInfo {
 export interface Corner {
   number: number
   letter: string
+  // 'detected': a braking zone found in the speed trace because no corner list is published
+  source: 'published' | 'detected'
   distance: number
   x: number
   y: number

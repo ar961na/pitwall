@@ -2,29 +2,55 @@
 
 Corner positions come from the MultiViewer circuit API [D3] (hand-made, "sufficient for
 visualization" per FastF1's docs); they're mapped to lap distance by nearest XY point [M3],
-like FastF1's CircuitInfo.add_marker_distance. See docs/REFERENCES.md.
+like FastF1's CircuitInfo.add_marker_distance. Brand-new circuits have no published corners
+(MultiViewer answers 404), so `detect_corners` falls back to braking zones found as minima of
+the speed trace [M4]. See docs/REFERENCES.md.
 """
 
 import numpy as np
 import pandas as pd
+from scipy.signal import find_peaks
+
+COLUMNS = ["number", "letter", "distance", "x", "y", "source"]
+# Minimum speed drop (km/h) for a speed minimum to count as a braking zone, and the minimum
+# distance between two zones. Chosen on Monza 2026, Zandvoort 2025 and Interlagos 2026: every
+# zone found lay within 100 m of a published corner. Flat-out corners are not found, by design.
+MIN_DROP_KMH = 10.0
+MIN_GAP_M = 150.0
 
 
 def locate_corners(circuit: dict | None, cmp: pd.DataFrame) -> pd.DataFrame:
     """Corner apexes (from MultiViewer circuit info) projected onto the lap's distance axis.
 
     Each corner's XY is matched to the nearest point of driver A's racing line in `cmp`.
-    Returns columns: number, letter, distance, x, y  (empty if no circuit info / no XY).
+    Returns COLUMNS with source "published" (empty if no circuit info / no XY).
     """
-    cols = ["number", "letter", "distance", "x", "y"]
     if not circuit or not circuit.get("corners") or "x_a" not in cmp:
-        return pd.DataFrame(columns=cols)
+        return pd.DataFrame(columns=COLUMNS)
     line = np.column_stack([cmp["x_a"], cmp["y_a"]])
     rows = []
     for c in circuit["corners"]:
         xy = np.array([c["trackPosition"]["x"], c["trackPosition"]["y"]])
         i = int(np.argmin(((line - xy) ** 2).sum(axis=1)))
-        rows.append([c["number"], c.get("letter") or "", float(cmp["distance"].iloc[i]), *xy])
-    return pd.DataFrame(rows, columns=cols).sort_values("distance").reset_index(drop=True)
+        rows.append(
+            [c["number"], c.get("letter") or "", float(cmp["distance"].iloc[i]), *xy, "published"]
+        )
+    return pd.DataFrame(rows, columns=COLUMNS).sort_values("distance").reset_index(drop=True)
+
+
+def detect_corners(cmp: pd.DataFrame) -> pd.DataFrame:
+    """Braking zones as minima of both drivers' mean speed, numbered in lap order.
+
+    Returns COLUMNS with source "detected". Numbers are zone numbers, not official corner numbers.
+    """
+    speed = ((cmp["speed_a"] + cmp["speed_b"]) / 2).to_numpy(float)
+    d = cmp["distance"].to_numpy(float)
+    step = float(np.median(np.diff(d))) if len(d) > 1 else 1.0
+    peaks, _ = find_peaks(-speed, prominence=MIN_DROP_KMH, distance=max(1, round(MIN_GAP_M / step)))
+    x = cmp["x_a"].to_numpy(float) if "x_a" in cmp else np.full(len(d), np.nan)
+    y = cmp["y_a"].to_numpy(float) if "y_a" in cmp else np.full(len(d), np.nan)
+    rows = [[n, "", d[i], x[i], y[i], "detected"] for n, i in enumerate(peaks, start=1)]
+    return pd.DataFrame(rows, columns=COLUMNS)
 
 
 def corner_analysis(

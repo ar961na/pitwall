@@ -33,7 +33,7 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 | **M1** | Resampling time-series onto a common distance grid (linear interpolation) | NumPy `np.interp` docs: https://numpy.org/doc/stable/reference/generated/numpy.interp.html | `telemetry/compare.py::resample_on_distance` |
 | **M2** | Distance by integrating speed over time (trapezoidal rule); integration error grows with length, so we use single laps only and rescale both laps to a common length | FastF1 `Telemetry.integrate_distance` / `add_distance`: https://docs.fastf1.dev/core.html · trapezoidal rule, e.g. Burden & Faires, *Numerical Analysis*, ch. 4 | `data/openf1.py::Session.lap_telemetry`, `telemetry/compare.py::compare_laps` |
 | **M3** | Corner apex → lap distance by nearest-neighbour match of XY positions | Same idea as FastF1 `CircuitInfo.add_marker_distance` (https://docs.fastf1.dev/circuit_info.html) | `telemetry/corners.py::locate_corners` |
-| **M4** | Corner detection from speed minima (planned fallback when a circuit has no corner data) | `scipy.signal.find_peaks`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html | planned |
+| **M4** | Braking zones from speed minima, the fallback when a circuit has no published corners | `scipy.signal.find_peaks`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html | `telemetry/corners.py::detect_corners` |
 
 ### Tyre & pace modelling
 

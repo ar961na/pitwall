@@ -3,7 +3,8 @@
 ## Done
 
 - Data layer on OpenF1, Jolpica and MultiViewer with a throttled disk cache
-- Telemetry: distance-aligned lap comparison, minisector map, corner-by-corner table
+- Telemetry: distance-aligned lap comparison, minisector map, corner-by-corner table; on circuits
+  without a published corner list, braking zones detected in the speed trace
 - Tyres: linear degradation model per race, cliff detection per stint (late-stint breakpoints only)
 - Strategy: Monte Carlo optimiser, calibration from a real race (tyres, cliffs, pit loss),
   gain from reacting to safety cars, optional ranking with that reaction applied
@@ -27,5 +28,4 @@
    the pace model)
 2. Compare the stint forecaster with the pace model on the same future laps
 3. Race predictor: weather and sprint-weekend features; a season scoreboard of past forecasts
-4. Corner detection from speed minima for circuits without published corner data [M4]
-5. Triage the open Dependabot PRs (several are major version bumps)
+4. Dependabot: config trimmed (on the PR branch); merge #20, #15 and #4 (TypeScript 7) separately

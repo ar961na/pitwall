@@ -1,5 +1,5 @@
 import type { Corner, Minisector } from '../api/types'
-import { SERIES_DASH } from '../lib/format'
+import { cornerLabel, SERIES_DASH } from '../lib/format'
 
 interface Props {
   distance: number[]
@@ -66,8 +66,7 @@ export function TrackMap({ distance, x, y, minisectors, corners, colorA, colorB 
       {segments}
       {corners.map((c) => (
         <text key={`${c.number}${c.letter}`} x={c.x} y={fy(c.y)} fontSize={fontSize} className="corner-label">
-          {c.number}
-          {c.letter}
+          {cornerLabel(c)}
         </text>
       ))}
     </svg>
