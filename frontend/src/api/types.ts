@@ -178,3 +178,17 @@ export interface Prediction {
   }
   drivers: PredictedDriver[]
 }
+
+export interface PaceCurve {
+  tyre_life: number[]
+  lo: number[]
+  median: number[]
+  hi: number[]
+}
+
+export interface PaceModelResponse {
+  circuit: string
+  circuit_in_training: boolean
+  curves: Record<string, PaceCurve>
+  metrics: Record<string, number | string | number[]>
+}

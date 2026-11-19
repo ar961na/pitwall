@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  Area,
   CartesianGrid,
   ComposedChart,
   Line,
@@ -11,7 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import { api } from '../api/client'
-import type { DegradationResponse } from '../api/types'
+import type { DegradationResponse, PaceModelResponse } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { Card, CompoundChip, Empty, Status } from '../components/ui'
 import { useApi } from '../hooks/useApi'
@@ -38,6 +39,7 @@ export function TyresPage() {
   const [sessionKey, setSessionKey] = useState<number | null>(null)
   const [driver, setDriver] = useState('')
   const deg = useApi(sessionKey ? () => api.degradation(sessionKey) : null, [sessionKey])
+  const pace = useApi(sessionKey ? () => api.paceModel(sessionKey) : null, [sessionKey])
   const data = deg.data
 
   const drivers = useMemo(() => [...new Set((data?.points ?? []).map((p) => p.driver))].sort(), [data])
@@ -194,6 +196,130 @@ export function TyresPage() {
           </Card>
         </div>
       )}
+
+      {data && <PaceModelCard pace={pace.data} loading={pace.loading} error={pace.error} />}
     </div>
+  )
+}
+
+export function bandRows(curve: PaceModelResponse['curves'][string]) {
+  // recharts draws a band from a [low, high] pair in one data key
+  return curve.tyre_life.map((t, i) => ({
+    tyre_life: t,
+    band: [curve.lo[i], curve.hi[i]] as [number, number],
+    median: curve.median[i],
+  }))
+}
+
+function PaceModelCard({ pace, loading, error }: { pace?: PaceModelResponse; loading: boolean; error?: string }) {
+  if (loading) return <Status loading hint="Loading the multi-race pace model…" />
+  if (!pace)
+    return (
+      <Card title="Expected pace across all races">
+        <Empty>
+          {error?.includes('train')
+            ? 'No multi-race pace model is trained on this server (make train-pace).'
+            : 'The multi-race pace model is not available here.'}
+        </Empty>
+      </Card>
+    )
+  const m = pace.metrics
+  const compounds = ORDER.filter((c) => pace.curves[c])
+  return (
+    <Card title="Expected pace across all races">
+      <div className="grid-2">
+        <div>
+          {compounds.map((c) => (
+            <div key={c}>
+              <h3>
+                <CompoundChip compound={c} />
+              </h3>
+              <ResponsiveContainer width="100%" height={160}>
+                <ComposedChart data={bandRows(pace.curves[c])} margin={{ top: 8, right: 8, bottom: 16, left: 8 }}>
+                  <CartesianGrid stroke="var(--chart-grid)" />
+                  <XAxis
+                    dataKey="tyre_life"
+                    type="number"
+                    domain={[1, 'dataMax']}
+                    label={{ value: 'Tyre age (laps)', position: 'insideBottom', offset: -12, ...LABEL }}
+                    {...AXIS}
+                  />
+                  <YAxis
+                    domain={['auto', 'auto']}
+                    width={56}
+                    tickFormatter={(v) => Number(v).toFixed(1)}
+                    label={{ value: 'vs median (s)', angle: -90, position: 'insideLeft', ...LABEL }}
+                    {...AXIS}
+                  />
+                  <Tooltip
+                    contentStyle={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                    labelFormatter={(t) => `Tyre age ${t} laps`}
+                    formatter={(v, name) =>
+                      Array.isArray(v)
+                        ? [`${Number(v[0]).toFixed(2)} to ${Number(v[1]).toFixed(2)} s`, '80% range']
+                        : [`${Number(v).toFixed(2)} s`, name === 'median' ? 'Expected' : String(name)]
+                    }
+                  />
+                  <Area
+                    dataKey="band"
+                    stroke="none"
+                    fill={COMPOUND_COLORS[c]}
+                    fillOpacity={0.2}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    dataKey="median"
+                    stroke={COMPOUND_COLORS[c]}
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          ))}
+        </div>
+        <div>
+          <p>
+            A LightGBM model trained on {Number(m.n_laps).toLocaleString('en')} laps from {m.n_races} races predicts a
+            lap against the driver's median for the race, at half distance on {pace.circuit}. The shaded range should
+            hold 80% of laps.
+          </p>
+          {!pace.circuit_in_training && (
+            <p className="error" role="note">
+              This circuit was not in the training races, so the curves use the model's average circuit.
+            </p>
+          )}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>On held-out later races</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mean error, this model</td>
+                  <td>{Number(m.mae_gbm_s).toFixed(3)} s</td>
+                </tr>
+                <tr>
+                  <td>Mean error, pooled linear model</td>
+                  <td>{Number(m.mae_linear_s).toFixed(3)} s</td>
+                </tr>
+                <tr>
+                  <td>Laps inside the 80% range</td>
+                  <td>{(Number(m.coverage_80_conformal) * 100).toFixed(1)}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">
+            The y-axis differs from the chart above: this one is relative to each driver's median lap, not corrected for
+            fuel.
+          </p>
+        </div>
+      </div>
+    </Card>
   )
 }

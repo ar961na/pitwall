@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 
 from pitwall.api.utils import get_session, records
 from pitwall.data.laps import green_flag_laps, race_laps
+from pitwall.models.pace_gbm import PaceModelMissingError, load_model, tyre_curves
 from pitwall.models.tyre_deg import LinearDegradationModel, cliff_ages
 
 router = APIRouter(tags=["degradation"])
@@ -53,4 +54,26 @@ def degradation(session_key: int) -> dict:
                 ]
             ].round(4)
         ),
+    }
+
+
+@router.get("/sessions/{session_key}/pace-model")
+def pace_model(session_key: int) -> dict:
+    """Multi-race model's expected pace by tyre age for this race's circuit and compounds."""
+    try:
+        model = load_model()
+    except PaceModelMissingError as e:
+        raise HTTPException(503, str(e)) from e
+    session, laps, _ = fit_race(session_key)
+    circuit = str(session.info["circuit_short_name"])
+    max_age = {str(c): int(a) for c, a in laps.groupby("compound")["tyre_life"].max().items()}
+    known = circuit in model.categories["circuit"]
+    return {
+        "circuit": circuit,
+        # an unseen circuit falls back to the model's average circuit
+        "circuit_in_training": known,
+        "curves": tyre_curves(model, circuit, session.total_laps, max_age),
+        "metrics": {
+            k: v for k, v in model.metrics.items() if isinstance(v, int | float | str | list)
+        },
     }

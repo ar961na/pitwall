@@ -52,3 +52,12 @@ def test_optimize_reactive_ranks_with_the_policy():
     assert reactive["reactive"] is True and fixed["reactive"] is False
     # with frequent safety cars, reacting makes the best strategy faster on average
     assert reactive["results"][0]["mean_s"] < fixed["results"][0]["mean_s"]
+
+
+def test_pace_model_without_file_is_503(monkeypatch, tmp_path):
+    from pitwall.config import settings
+
+    monkeypatch.setattr(settings, "models_dir", tmp_path)
+    r = client.get("/api/sessions/1/pace-model")
+    assert r.status_code == 503
+    assert "train-pace" in r.json()["detail"]

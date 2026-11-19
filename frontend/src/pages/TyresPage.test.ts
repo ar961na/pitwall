@@ -28,3 +28,14 @@ describe('groupByCompound', () => {
     expect(g.HARD).toBeUndefined()
   })
 })
+
+describe('bandRows', () => {
+  it('pairs the low and high quantiles per tyre age', async () => {
+    const { bandRows } = await import('./TyresPage')
+    const rows = bandRows({ tyre_life: [1, 2], lo: [-1, -0.5], median: [0, 0.2], hi: [1, 1.5] })
+    expect(rows).toEqual([
+      { tyre_life: 1, band: [-1, 1], median: 0 },
+      { tyre_life: 2, band: [-0.5, 1.5], median: 0.2 },
+    ])
+  })
+})

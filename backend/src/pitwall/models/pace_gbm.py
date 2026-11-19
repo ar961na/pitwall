@@ -11,12 +11,16 @@ margin is added on both sides. Evaluation uses race-ordered expanding splits [M1
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Self
 
+import joblib
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 
+from pitwall.config import settings
 from pitwall.data import openf1
 from pitwall.data.laps import green_flag_laps, race_laps
 
@@ -214,4 +218,52 @@ def evaluate(df: pd.DataFrame, n_splits: int = 4) -> dict[str, float]:
         out[f"coverage_80_{name}"] = float(np.concatenate(inside[name]).mean())
         out[f"interval_width_{name}_s"] = float(np.concatenate(width[name]).mean())
     out["n_test_laps"] = int(sum(len(v) for v in inside["raw"]))
+    return out
+
+
+MODEL_FILE = "pace_gbm.joblib"
+
+
+class PaceModelMissingError(RuntimeError):
+    pass
+
+
+@lru_cache(maxsize=2)
+def _load(path: Path, mtime: float) -> "PaceModel":
+    return joblib.load(path)
+
+
+def load_model(path: Path | None = None) -> PaceModel:
+    """The trained model from models/pace_gbm.joblib, reloaded when the file changes."""
+    path = path or settings.models_dir / MODEL_FILE
+    if not path.exists():
+        raise PaceModelMissingError(
+            "No trained pace model. Train one with `make train-pace` "
+            "(python backend/scripts/train_pace_gbm.py)."
+        )
+    return _load(path, path.stat().st_mtime)
+
+
+def tyre_curves(model: PaceModel, circuit: str, total_laps: int, max_age: dict[str, int]) -> dict:
+    """Expected pace against tyre age per compound, at mid-race fuel, on `circuit`.
+
+    Other inputs are held fixed (second stint, fresh set, lap at half distance), so the curves
+    show the tyre effect alone. Values are seconds relative to a driver's median lap.
+    """
+    out = {}
+    for compound, top in max_age.items():
+        ages = np.arange(1, top + 1)
+        probe = pd.DataFrame(
+            {
+                "compound": compound,
+                "tyre_life": ages.astype(float),
+                "lap_frac": 0.5,
+                "laps_remaining": total_laps // 2,
+                "stint": 2.0,
+                "fresh_tyre": True,
+                "circuit": circuit,
+            }
+        )
+        pred = model.predict(probe).round(4)
+        out[compound] = {"tyre_life": ages.tolist(), **{k: pred[k].tolist() for k in pred.columns}}
     return out

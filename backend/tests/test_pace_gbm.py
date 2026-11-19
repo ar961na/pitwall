@@ -97,3 +97,23 @@ def test_conformal_margin_restores_coverage():
     covered = ((y >= lo - margin) & (y <= hi + margin)).mean()
     assert covered == pytest.approx(0.8, abs=0.02)
     assert pace_gbm.conformal_margin(lo * 10, hi * 10, y, coverage=0.8) < 0  # too wide: shrinks
+
+
+def test_tyre_curves_and_loading(laps, tmp_path):
+    import joblib
+
+    model = PaceModel.fit(laps)
+    curves = pace_gbm.tyre_curves(model, "c0", 50, {"SOFT": 20, "HARD": 25})
+    assert set(curves) == {"SOFT", "HARD"}
+    soft = curves["SOFT"]
+    assert soft["tyre_life"] == list(range(1, 21))
+    assert all(
+        lo <= m <= hi for lo, m, hi in zip(soft["lo"], soft["median"], soft["hi"], strict=True)
+    )
+    assert soft["median"][-1] > soft["median"][0]  # worn tyres are slower
+
+    with pytest.raises(pace_gbm.PaceModelMissingError):
+        pace_gbm.load_model(tmp_path / "missing.joblib")
+    path = tmp_path / "pace.joblib"
+    joblib.dump(model, path)
+    assert pace_gbm.load_model(path).categories == model.categories
