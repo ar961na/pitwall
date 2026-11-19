@@ -35,6 +35,8 @@ export interface LapInfo {
 export interface Corner {
   number: number
   letter: string
+  // 'detected': a braking zone found in the speed trace because no corner list is published
+  source: 'published' | 'detected'
   distance: number
   x: number
   y: number
@@ -56,8 +58,7 @@ export interface CompareResponse {
   channels: Record<string, (number | boolean | null)[]>
   minisectors: Minisector[]
   corners: Corner[]
-  corner_analysis: CornerRow[] | null
-  corner_analysis_status: string
+  corner_analysis: CornerRow[]
 }
 
 export type Compound = 'SOFT' | 'MEDIUM' | 'HARD'
@@ -81,6 +82,8 @@ export interface RaceParams {
   sc_pit_loss_factor: number
   lap_noise_s: number
   compounds: Record<string, CompoundParams>
+  // where each compound's degradation came from, after calibration
+  tyre_source?: Record<string, 'race' | 'pace_model' | 'default'>
 }
 
 export interface StrategyResult {
@@ -96,6 +99,7 @@ export interface StrategyResult {
   p_best: number
   gap_s: number
   expected_no_sc_s: number
+  reactive_gain_s: number
   clean_lap_times_s?: number[]
 }
 
@@ -105,6 +109,7 @@ export interface OptimizeRequest {
   min_stint: number
   n_sims: number
   seed: number
+  reactive: boolean
 }
 
 export interface OptimizeResponse {
@@ -124,6 +129,8 @@ export interface DegradationResponse {
     n_laps: number
   }
   curves: Record<string, { tyre_life: number[]; corrected_s: number[] }>
+  cliffs: Record<string, number>
+  laps_per_compound: Record<string, number>
   points: {
     driver: string
     team: string
@@ -135,4 +142,76 @@ export interface DegradationResponse {
     corrected_s: number
     predicted_s: number
   }[]
+}
+
+export type RoundState = 'finished' | 'qualified' | 'upcoming'
+
+export interface PredictRound {
+  round: number
+  name: string
+  date: string
+  state: RoundState
+}
+
+export interface PredictedDriver {
+  driver_id: string
+  code: string
+  constructor_id: string
+  grid: number | null
+  predicted_position: number
+  expected_position: number
+  p_win: number
+  p_podium: number
+  actual_position: number | null
+}
+
+export interface Prediction {
+  year: number
+  round: number
+  race_name: string
+  state: RoundState
+  variant: 'post_quali' | 'pre_quali'
+  in_training_data: boolean
+  score: { spearman: number; winner_predicted: boolean; winner_p_win: number } | null
+  model: {
+    trained_at: string
+    years: [number, number]
+    n_races: number
+    // race-ordered cross-validation, with the same metrics for plain grid order
+    cv: Record<string, number>
+  }
+  drivers: PredictedDriver[]
+}
+
+export interface PaceCurve {
+  tyre_life: number[]
+  lo: number[]
+  median: number[]
+  hi: number[]
+}
+
+export interface PaceModelResponse {
+  circuit: string
+  circuit_in_training: boolean
+  curves: Record<string, PaceCurve>
+  metrics: Record<string, number | string | number[]>
+}
+
+export interface StintForecastLap {
+  driver: string
+  stint: number
+  compound: string
+  lap: number
+  actual: number
+  gru: number
+  persistence: number
+}
+
+export interface StintForecastResponse {
+  session: string
+  driver: string
+  in_training_data: boolean
+  mae: { gru: number | null; persistence: number | null }
+  model: Record<string, number | string>
+  laps: StintForecastLap[]
 }

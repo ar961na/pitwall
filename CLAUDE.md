@@ -4,18 +4,9 @@ Follow ~/Work/references/AI_CONTEXT.md. Scope: `guidelines/ui.md` and `ui/tokens
 frontend (copied verbatim to `frontend/src/styles/tokens.css`; fixes go in `index.css`, marked).
 `latex/` and `guidelines/latex-figures.md` are for LaTeX documents only, never the web app.
 
-This is a **collaborative learning project**. The owner is preparing for F1 data/ML roles and
-wants to be able to explain every line in an interview.
-
-## The one rule
-
-Functions that raise `NotImplementedError("TASK …")` and the TODOs in
-`backend/scripts/train_stint_seq.py` and `frontend/src/pages/{Tyres,Predict}Page.tsx` are the
-**owner's tasks** (see `docs/tasks/`). Don't implement them, even if asked casually. Instead:
-explain concepts, point to the relevant hint, review their attempt, run the task tests
-(`pytest -m task …`), and debug *with* them. Writing infrastructure (endpoints, wiring, CI,
-Docker, data plumbing) is fine. If the owner explicitly says "write it for me", confirm once,
-because that's their call.
+pitwall is a finished application, not a teaching scaffold (the owner changed this on
+2026-11-14): implement features fully, with tests. Remaining unfinished pieces are listed in
+`docs/ROADMAP.md`; update it when something lands.
 
 ## Citations
 
@@ -30,13 +21,13 @@ illustrative.
   (Monte Carlo simulator), `predict/` (Jolpica history), `dl/`, `api/` (FastAPI, routes keyed by
   OpenF1 `session_key`)
 - `frontend/`: React + TS + Vite + recharts; `src/hooks/useApi.ts` is the data-fetching pattern
-- `docs/tasks/`: task sheets with hidden hints; `docs/REFERENCES.md`
+- `docs/REFERENCES.md` (sources and methods), `docs/ROADMAP.md` (what is done and what is next)
 
 ## Commands
 
 - Env: `micromamba activate pitwall` (Python 3.12, Node 22, PyTorch with MPS, LightGBM; both from
   conda-forge so they share one OpenMP runtime)
-- `make api` / `make web` / `make test` / `make test-tasks` / `make lint` / `make up` (Docker)
+- `make api` / `make web` / `make test` / `make lint` / `make up` (Docker)
 - Network tests: `pytest -m network`. OpenF1's free tier is 30 req/min, and the client throttles
   and caches under `data/http_cache`.
 
@@ -51,6 +42,14 @@ illustrative.
 - A new endpoint the UI calls must also be added to `static_demo.build()`, or the demo shows
   "not included in the static demo".
 - `scripts/smoke.sh` is the end-to-end check (`make smoke` after `make up`).
+
+## Race predictor
+
+- `predict/model.py` (ranker, Plackett-Luce sampling), `predict/service.py` (train, load, forecast
+  a round in state finished / qualified / upcoming), `scripts/train_race_predictor.py`.
+- The model file `models/race_predictor.joblib` is git-ignored. Without it `/api/predict/...`
+  answers 503; `make train-predictor` creates it. `pages.yml` trains one for the demo.
+- LGBM_PARAMS were picked by race-ordered CV; re-run that comparison before changing them.
 
 ## Gotchas
 

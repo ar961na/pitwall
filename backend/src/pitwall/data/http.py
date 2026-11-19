@@ -30,7 +30,7 @@ class CachedClient:
         self._last_call = 0.0
 
     def _cache_path(self, url: str) -> Path:
-        return self.cache_dir / f"{hashlib.sha1(url.encode()).hexdigest()}.json"
+        return self.cache_dir / f"{hashlib.sha256(url.encode()).hexdigest()}.json"
 
     def get(self, path: str, ttl_s: float | None = None, allow_404: bool = False):
         """GET `path` (may include a query string) and return parsed JSON."""

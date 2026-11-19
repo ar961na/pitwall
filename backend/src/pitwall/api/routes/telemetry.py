@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pitwall.api.utils import columns, get_session, records
 from pitwall.data.openf1 import circuit_info
 from pitwall.telemetry.compare import compare_laps, minisector_dominance
-from pitwall.telemetry.corners import corner_analysis, locate_corners
+from pitwall.telemetry.corners import corner_analysis, detect_corners, locate_corners
 
 router = APIRouter(tags=["telemetry"])
 
@@ -24,10 +24,8 @@ def compare(
         raise HTTPException(404, str(e)) from e
 
     corners = locate_corners(circuit_info(session.info["circuit_key"], session.info["year"]), cmp)
-    try:
-        corner_table, corner_status = records(corner_analysis(cmp, corners)), "ok"
-    except NotImplementedError as e:
-        corner_table, corner_status = None, str(e)
+    if corners.empty:
+        corners = detect_corners(cmp)
 
     def lap_info(code, lap) -> dict:
         return {
@@ -43,6 +41,5 @@ def compare(
         "channels": columns(cmp),
         "minisectors": records(minisector_dominance(cmp)),
         "corners": records(corners),
-        "corner_analysis": corner_table,
-        "corner_analysis_status": corner_status,
+        "corner_analysis": records(corner_analysis(cmp, corners)),
     }

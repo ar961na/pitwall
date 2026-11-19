@@ -1,12 +1,8 @@
-"""TASK 5 acceptance tests. Run:  pytest -m task tests/tasks/test_task5_features.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from pitwall.predict.features import build_features
-
-pytestmark = pytest.mark.task
 
 
 @pytest.fixture
@@ -29,6 +25,10 @@ def results():
                         "grid": int(rng.integers(1, 7)),
                         "position": pos,
                         "quali_pos": int(rng.integers(1, 7)),
+                        "points": float(max(0, 7 - pos)),
+                        "q1_s": 80.0 + float(rng.random()),
+                        "q2_s": float("nan"),
+                        "q3_s": float("nan"),
                     }
                 )
     return pd.DataFrame(rows)

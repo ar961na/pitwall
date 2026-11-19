@@ -15,6 +15,10 @@ import type {
   EventInfo,
   OptimizeRequest,
   OptimizeResponse,
+  PaceModelResponse,
+  StintForecastResponse,
+  Prediction,
+  PredictRound,
   RaceParams,
 } from './types'
 
@@ -56,6 +60,9 @@ export const api = {
   drivers: (sessionKey: number) => request<Driver[]>(`/sessions/${sessionKey}/drivers`),
   compare: (sessionKey: number, a: string, b: string) =>
     request<CompareResponse>(`/sessions/${sessionKey}/compare?a=${a}&b=${b}`),
+  stintForecast: (sessionKey: number, driver: string) =>
+    request<StintForecastResponse>(`/sessions/${sessionKey}/stint-forecast?driver=${driver}`),
+  paceModel: (sessionKey: number) => request<PaceModelResponse>(`/sessions/${sessionKey}/pace-model`),
   degradation: (sessionKey: number) => request<DegradationResponse>(`/sessions/${sessionKey}/degradation`),
   strategyDefaults: async () => {
     const params = await request<RaceParams>('/strategy/defaults')
@@ -70,4 +77,6 @@ export const api = {
     return params
   },
   optimize,
+  predictRounds: (year: number) => request<PredictRound[]>(`/predict/${year}`),
+  predict: (year: number, round: number) => request<Prediction>(`/predict/${year}/${round}`),
 }

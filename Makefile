@@ -1,5 +1,5 @@
 # Shortcuts. Local targets assume `micromamba activate pitwall`.
-.PHONY: env api web test test-tasks test-network scoreboard lint fmt mlflow up down docker-test smoke demo
+.PHONY: env api web test test-network lint fmt mlflow train-predictor train-pace train-stint up down docker-test smoke demo
 
 env:            ## create the micromamba env (Python + Node + PyTorch/MPS)
 	micromamba create -f environment.yml -y
@@ -14,12 +14,6 @@ test:           ## backend + frontend tests (offline)
 	cd backend && pytest
 	cd frontend && npm test
 
-test-tasks:     ## acceptance tests for docs/tasks (fail until you implement them)
-	cd backend && pytest -m task
-
-scoreboard:     ## task progress table (same as the CI job summary)
-	cd backend && (pytest -m task --junitxml=tasks.xml -q >/dev/null || true) && python scripts/task_scoreboard.py tasks.xml && rm tasks.xml
-
 test-network:   ## live checks against OpenF1 / Jolpica
 	cd backend && pytest -m network
 
@@ -30,6 +24,15 @@ lint:
 fmt:
 	cd backend && ruff format src tests scripts && ruff check --fix src tests scripts
 	cd frontend && npm run format
+
+train-predictor: ## fit the race predictor on Jolpica history (about 2 min the first time)
+	cd backend && python scripts/train_race_predictor.py
+
+train-pace:     ## fit the quantile pace model (first run downloads about 90 races, ~25 min)
+	cd backend && python scripts/train_pace_gbm.py
+
+train-stint:    ## fit the GRU stint forecaster (needs train-pace's lap table)
+	cd backend && python scripts/train_stint_seq.py
 
 mlflow:         ## experiment UI on :5000
 	mlflow ui --backend-store-uri sqlite:///mlflow.db

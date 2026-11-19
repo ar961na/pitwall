@@ -33,7 +33,7 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 | **M1** | Resampling time-series onto a common distance grid (linear interpolation) | NumPy `np.interp` docs: https://numpy.org/doc/stable/reference/generated/numpy.interp.html | `telemetry/compare.py::resample_on_distance` |
 | **M2** | Distance by integrating speed over time (trapezoidal rule); integration error grows with length, so we use single laps only and rescale both laps to a common length | FastF1 `Telemetry.integrate_distance` / `add_distance`: https://docs.fastf1.dev/core.html · trapezoidal rule, e.g. Burden & Faires, *Numerical Analysis*, ch. 4 | `data/openf1.py::Session.lap_telemetry`, `telemetry/compare.py::compare_laps` |
 | **M3** | Corner apex → lap distance by nearest-neighbour match of XY positions | Same idea as FastF1 `CircuitInfo.add_marker_distance` (https://docs.fastf1.dev/circuit_info.html) | `telemetry/corners.py::locate_corners` |
-| **M4** | Corner detection from speed minima (Task 1 stretch) | `scipy.signal.find_peaks`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html | Task 1 |
+| **M4** | Braking zones from speed minima, the fallback when a circuit has no published corners | `scipy.signal.find_peaks`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html | `telemetry/corners.py::detect_corners` |
 
 ### Tyre & pace modelling
 
@@ -41,21 +41,21 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 |-----|--------|-----------|---------|
 | **M5** | Lap-time model = base + tyre degradation + fuel-mass effect (+ driver offset); linear and non-linear degradation forms | Heilmeier, Graf & Lienkamp (2018). *A Race Simulation for Strategy Decisions in Circuit Motorsports.* IEEE ITSC 2018. doi:[10.1109/ITSC.2018.8570012](https://doi.org/10.1109/ITSC.2018.8570012) | `models/tyre_deg.py`, `strategy/params.py` |
 | **M6** | Ordinary least squares with fixed effects (driver dummies) | Wooldridge, J. M. (2010). *Econometric Analysis of Cross Section and Panel Data*, 2nd ed., MIT Press, ch. 10 | `models/tyre_deg.py::LinearDegradationModel` |
-| **M7** | Breakpoint ("hinge"/segmented) regression for the tyre cliff | Muggeo, V. M. R. (2003). *Estimating regression models with unknown break-points.* Statistics in Medicine 22(19):3055–3071. doi:[10.1002/sim.1545](https://doi.org/10.1002/sim.1545) | Task 2 `detect_cliff` |
-| **M8** | Testing for a breakpoint when it's only defined under the alternative (why a plain F-test after grid search is optimistic) | Davies, R. B. (1987). *Hypothesis testing when a nuisance parameter is present only under the alternative.* Biometrika 74(1):33–43. doi:[10.1093/biomet/74.1.33](https://doi.org/10.1093/biomet/74.1.33) | Task 2 |
-| **M9** | Gradient-boosted decision trees | Ke, G. et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree.* NeurIPS 30. https://papers.nips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html | Tasks 3, 5 |
-| **M10** | Quantile regression / pinball loss for prediction intervals | Koenker, R. & Bassett, G. (1978). *Regression Quantiles.* Econometrica 46(1):33–50. doi:[10.2307/1913643](https://doi.org/10.2307/1913643) | Task 3 |
-| **M11** | Huber loss (less sensitive to outlier laps than squared error) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | Tasks 3, 6 |
-| **M12** | Mixed-effects models (stretch) | Bates, D. et al. (2015). *Fitting Linear Mixed-Effects Models Using lme4.* J. Stat. Softw. 67(1). doi:[10.18637/jss.v067.i01](https://doi.org/10.18637/jss.v067.i01) | Task 3 stretch |
+| **M7** | Breakpoint ("hinge"/segmented) regression for the tyre cliff | Muggeo, V. M. R. (2003). *Estimating regression models with unknown break-points.* Statistics in Medicine 22(19):3055–3071. doi:[10.1002/sim.1545](https://doi.org/10.1002/sim.1545) | `models/tyre_deg.py::detect_cliff` |
+| **M8** | Testing for a breakpoint when it's only defined under the alternative (why a plain F-test after grid search is optimistic) | Davies, R. B. (1987). *Hypothesis testing when a nuisance parameter is present only under the alternative.* Biometrika 74(1):33–43. doi:[10.1093/biomet/74.1.33](https://doi.org/10.1093/biomet/74.1.33) | `models/tyre_deg.py::CLIFF_P_VALUE` |
+| **M9** | Gradient-boosted decision trees | Ke, G. et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree.* NeurIPS 30. https://papers.nips.cc/paper_files/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html | `models/pace_gbm.py`, `predict/model.py` |
+| **M10** | Quantile regression / pinball loss for prediction intervals | Koenker, R. & Bassett, G. (1978). *Regression Quantiles.* Econometrica 46(1):33–50. doi:[10.2307/1913643](https://doi.org/10.2307/1913643) | `models/pace_gbm.py` |
+| **M11** | Huber loss (less sensitive to outlier laps than squared error) | Huber, P. J. (1964). *Robust Estimation of a Location Parameter.* Ann. Math. Statist. 35(1):73–101. doi:[10.1214/aoms/1177703732](https://doi.org/10.1214/aoms/1177703732) | `models/pace_gbm.py`, `dl/stint_model.py` |
+| **M12** | Mixed-effects models | Bates, D. et al. (2015). *Fitting Linear Mixed-Effects Models Using lme4.* J. Stat. Softw. 67(1). doi:[10.18637/jss.v067.i01](https://doi.org/10.18637/jss.v067.i01) | not used yet |
 
 ### Validation
 
 | Tag | Method | Reference | Used in |
 |-----|--------|-----------|---------|
-| **M13** | Time-ordered (expanding-window) cross-validation, grouped by race | Bergmeir, C. & Benítez, J. M. (2012). *On the use of cross-validation for time series predictor evaluation.* Information Sciences 191:192–213. doi:[10.1016/j.ins.2011.12.028](https://doi.org/10.1016/j.ins.2011.12.028) · Hyndman & Athanasopoulos, *Forecasting: Principles and Practice*, 3rd ed., §5.10: https://otexts.com/fpp3/tscv.html | Tasks 3, 5, 6 |
-| **M14** | Data leakage (why features use `.shift(1)` and the perturbation test) | Kaufman, S., Rosset, S. & Perlich, C. (2012). *Leakage in Data Mining: Formulation, Detection, and Avoidance.* ACM TKDD 6(4). doi:[10.1145/2382577.2382579](https://doi.org/10.1145/2382577.2382579) | Task 5 tests |
-| **M15** | Brier score for probabilistic forecasts | Brier, G. W. (1950). *Verification of forecasts expressed in terms of probability.* Monthly Weather Review 78(1):1–3. doi:[10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2](https://doi.org/10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2) | Task 5 |
-| **M16** | Probability calibration / reliability diagrams | Niculescu-Mizil, A. & Caruana, R. (2005). *Predicting Good Probabilities with Supervised Learning.* ICML. doi:[10.1145/1102351.1102430](https://doi.org/10.1145/1102351.1102430) | Task 5 |
+| **M13** | Time-ordered (expanding-window) cross-validation, grouped by race | Bergmeir, C. & Benítez, J. M. (2012). *On the use of cross-validation for time series predictor evaluation.* Information Sciences 191:192–213. doi:[10.1016/j.ins.2011.12.028](https://doi.org/10.1016/j.ins.2011.12.028) · Hyndman & Athanasopoulos, *Forecasting: Principles and Practice*, 3rd ed., §5.10: https://otexts.com/fpp3/tscv.html | `models/pace_gbm.py::time_series_splits` |
+| **M14** | Data leakage (why features use `.shift(1)` and the perturbation test) | Kaufman, S., Rosset, S. & Perlich, C. (2012). *Leakage in Data Mining: Formulation, Detection, and Avoidance.* ACM TKDD 6(4). doi:[10.1145/2382577.2382579](https://doi.org/10.1145/2382577.2382579) | `predict/features.py`, `tests/test_features.py` |
+| **M15** | Brier score for probabilistic forecasts | Brier, G. W. (1950). *Verification of forecasts expressed in terms of probability.* Monthly Weather Review 78(1):1–3. doi:[10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2](https://doi.org/10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2) | `predict/model.py` |
+| **M16** | Probability calibration / reliability diagrams | Niculescu-Mizil, A. & Caruana, R. (2005). *Predicting Good Probabilities with Supervised Learning.* ICML. doi:[10.1145/1102351.1102430](https://doi.org/10.1145/1102351.1102430) | `predict/model.py` |
 
 ### Strategy simulation
 
@@ -63,19 +63,21 @@ OpenF1 and Jolpica under CC BY-NC-SA 4.0. The web UI shows the data credit in it
 |-----|--------|-----------|---------|
 | **M17** | Lap-by-lap race simulation with Monte Carlo for safety cars, lap-time variability and pit stops | Heilmeier, Graf, Betz & Lienkamp (2020). *Application of Monte Carlo Methods to Consider Probabilistic Effects in a Race Simulation for Circuit Motorsport.* Applied Sciences 10(12):4229. doi:[10.3390/app10124229](https://doi.org/10.3390/app10124229) · reference implementation (LGPL-3.0): https://github.com/TUMFTM/race-simulation | `strategy/simulator.py` |
 | **M18** | Common random numbers (variance reduction when comparing alternatives) | Law, A. M. (2015). *Simulation Modeling and Analysis*, 5th ed., McGraw-Hill, ch. 11 · Glasserman, P. (2003). *Monte Carlo Methods in Financial Engineering*, Springer, §4.2 | `strategy/simulator.py::RaceScenarios`, `optimize` |
-| **M19** | Neural networks for pit-stop decisions (Task 4 stretch background) | Heilmeier, Thomaser, Graf & Betz (2020). *Virtual Strategy Engineer: Using Artificial Neural Networks for Making Race Strategy Decisions in Circuit Motorsport.* Applied Sciences 10(21):7805. doi:[10.3390/app10217805](https://doi.org/10.3390/app10217805) | Task 4 stretch |
-| **M20** | Q-learning / MDPs for the reactive-policy stretch | Sutton, R. S. & Barto, A. G. (2018). *Reinforcement Learning: An Introduction*, 2nd ed., MIT Press. http://incompleteideas.net/book/the-book-2nd.html · Watkins, C. & Dayan, P. (1992). *Q-learning.* Machine Learning 8:279–292. doi:[10.1007/BF00992698](https://doi.org/10.1007/BF00992698) | Task 4 stretch |
+| **M19** | Neural networks for pit-stop decisions (background) | Heilmeier, Thomaser, Graf & Betz (2020). *Virtual Strategy Engineer: Using Artificial Neural Networks for Making Race Strategy Decisions in Circuit Motorsport.* Applied Sciences 10(21):7805. doi:[10.3390/app10217805](https://doi.org/10.3390/app10217805) | not used yet |
+| **M20** | Q-learning / MDPs for the a learned pit policy | Sutton, R. S. & Barto, A. G. (2018). *Reinforcement Learning: An Introduction*, 2nd ed., MIT Press. http://incompleteideas.net/book/the-book-2nd.html · Watkins, C. & Dayan, P. (1992). *Q-learning.* Machine Learning 8:279–292. doi:[10.1007/BF00992698](https://doi.org/10.1007/BF00992698) | not used yet |
 
 ### Ranking & deep learning
 
 | Tag | Method | Reference | Used in |
 |-----|--------|-----------|---------|
-| **M21** | LambdaRank / LambdaMART (LightGBM `lambdarank`) | Burges, C. J. C. (2010). *From RankNet to LambdaRank to LambdaMART: An Overview.* Microsoft Research Tech. Report MSR-TR-2010-82 | Task 5 |
-| **M22** | Listwise ranking loss (ListNet) and the Plackett–Luce model | Cao, Z. et al. (2007). *Learning to Rank: From Pairwise Approach to Listwise Approach.* ICML. doi:[10.1145/1273496.1273513](https://doi.org/10.1145/1273496.1273513) · Plackett, R. L. (1975). *The Analysis of Permutations.* JRSS C 24(2):193–202 | Task 5 stretch |
-| **M23** | Permutation-invariant set models | Zaheer, M. et al. (2017). *Deep Sets.* NeurIPS · Lee, J. et al. (2019). *Set Transformer.* ICML | Task 5 stretch |
-| **M24** | LSTM / GRU sequence models | Hochreiter, S. & Schmidhuber, J. (1997). *Long Short-Term Memory.* Neural Computation 9(8):1735–1780 · Cho, K. et al. (2014). *Learning Phrase Representations using RNN Encoder–Decoder.* EMNLP | Task 6 |
-| **M25** | Transformer encoder | Vaswani, A. et al. (2017). *Attention Is All You Need.* NeurIPS | Tasks 5, 6 |
-| **M26** | AdamW optimiser | Loshchilov, I. & Hutter, F. (2019). *Decoupled Weight Decay Regularization.* ICLR | Task 6 |
+| **M21** | LambdaRank / LambdaMART (LightGBM `lambdarank`) | Burges, C. J. C. (2010). *From RankNet to LambdaRank to LambdaMART: An Overview.* Microsoft Research Tech. Report MSR-TR-2010-82 | `predict/model.py` |
+| **M22** | Listwise ranking loss (ListNet) and the Plackett–Luce model | Cao, Z. et al. (2007). *Learning to Rank: From Pairwise Approach to Listwise Approach.* ICML. doi:[10.1145/1273496.1273513](https://doi.org/10.1145/1273496.1273513) · Plackett, R. L. (1975). *The Analysis of Permutations.* JRSS C 24(2):193–202 | not used yet |
+| **M23** | Permutation-invariant set models | Zaheer, M. et al. (2017). *Deep Sets.* NeurIPS · Lee, J. et al. (2019). *Set Transformer.* ICML | not used yet |
+| **M24** | LSTM / GRU sequence models | Hochreiter, S. & Schmidhuber, J. (1997). *Long Short-Term Memory.* Neural Computation 9(8):1735–1780 · Cho, K. et al. (2014). *Learning Phrase Representations using RNN Encoder–Decoder.* EMNLP | `dl/stint_model.py` |
+| **M25** | Transformer encoder | Vaswani, A. et al. (2017). *Attention Is All You Need.* NeurIPS | `dl/stint_model.py` |
+| **M26** | AdamW optimiser | Loshchilov, I. & Hutter, F. (2019). *Decoupled Weight Decay Regularization.* ICLR | `dl/stint_model.py` |
+| **M27** | Sampling finishing orders from a Plackett-Luce model by adding Gumbel noise to scores and sorting | Yellott, J. I. (1977). *The relationship between Luce's Choice Axiom, Thurstone's Theory of Comparative Judgment, and the double exponential distribution.* J. Math. Psychol. 15(2):109–144. doi:[10.1016/0022-2496(77)90026-8](https://doi.org/10.1016/0022-2496(77)90026-8) | `predict/model.py::sample_orders` |
+| **M28** | Conformalized quantile regression: widen quantile intervals by a margin measured on held-out data | Romano, Y., Patterson, E. & Candès, E. (2019). *Conformalized Quantile Regression.* NeurIPS 32. https://proceedings.neurips.cc/paper/2019/hash/5103c3584b063c431bd1268e9b5e76fb-Abstract.html | `models/pace_gbm.py::conformal_margin` |
 
 ## Software
 

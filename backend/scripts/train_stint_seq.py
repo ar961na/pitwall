@@ -1,50 +1,40 @@
-"""TASK 6: train a sequence model that forecasts the next laps of a stint.
+"""Train the GRU stint forecaster on the cached lap table and save it to models/.
 
-Skeleton only: the TODOs are yours (docs/tasks/06-sequence-model.md).
-
-    python scripts/train_stint_seq.py --years 2023 2024 --epochs 30
+python scripts/train_pace_gbm.py        # builds data/pace_<first>_<last>.parquet first
+python scripts/train_stint_seq.py --years 2023 2026 --epochs 40
 """
 
 import argparse
+import json
+import logging
 
+import pandas as pd
 import torch
-from torch import nn
 
-from pitwall.dl.device import best_device
-
-
-class StintForecaster(nn.Module):
-    """TODO: an LSTM/GRU (or small Transformer) mapping (B, context, F) -> (B, horizon)."""
-
-    def __init__(self, n_features: int, horizon: int, hidden: int = 64):
-        super().__init__()
-        raise NotImplementedError("TASK 6")
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError("TASK 6")
+from pitwall.config import settings
+from pitwall.dl.stint_model import MODEL_FILE, save, train
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--years", type=int, nargs="+", default=[2023, 2024])
-    ap.add_argument("--context", type=int, default=8)
-    ap.add_argument("--horizon", type=int, default=3)
-    ap.add_argument("--epochs", type=int, default=30)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--years", type=int, nargs=2, default=[2023, 2026], metavar=("FIRST", "LAST"))
+    ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--lr", type=float, default=1e-3)
+    # measured 2026-11-19: CPU 22 s vs Apple MPS 41 s for this small GRU (launch overhead)
+    ap.add_argument("--gpu", action="store_true", help="use MPS/CUDA if available")
     args = ap.parse_args()
 
-    device = best_device()
-    print(f"training on {device} with {vars(args)}")
-
-    # TODO 1: build the stint table (build_pace_dataset from TASK 3 + a stint_id column),
-    #         split by RACE in time (time_series_splits), never randomly by window.
-    # TODO 2: make_windows(...) for train/val; normalise features with TRAIN statistics only.
-    # TODO 3: DataLoaders, model, AdamW, MSE (or Huber) loss, early stopping on val loss.
-    # TODO 4: compare against baselines on the same val windows:
-    #           (a) "persistence": next laps = last observed lap
-    #           (b) your LightGBM pace model from TASK 3
-    # TODO 5: log params, curves and the final model to MLflow (see scripts/fit_degradation.py).
-    raise NotImplementedError("TASK 6")
+    table = settings.data_dir / f"pace_{args.years[0]}_{args.years[1]}.parquet"
+    if not table.exists():
+        raise SystemExit(f"{table} not found; run scripts/train_pace_gbm.py first")
+    laps = pd.read_parquet(table)
+    device = None if args.gpu else torch.device("cpu")
+    model = train(laps, epochs=args.epochs, lr=args.lr, device=device)
+    out = settings.models_dir / MODEL_FILE
+    out.parent.mkdir(parents=True, exist_ok=True)
+    save(model, out)
+    print(json.dumps(model.metrics, indent=2))
 
 
 if __name__ == "__main__":

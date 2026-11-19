@@ -1,9 +1,13 @@
 # Weekly dependency update PRs; minor/patch bumps are grouped to keep the noise down.
 version: 2
 updates:
+  # pitwall is an application, but backend/pyproject.toml only states lower bounds. Raising a
+  # bound to the newest release ("increase") changes nothing that gets installed and made five
+  # PRs a week, so bounds are only raised when the current one excludes the latest version.
   - package-ecosystem: pip
     directory: /backend
     schedule: { interval: weekly }
+    versioning-strategy: increase-if-necessary
     groups:
       python-minor:
         update-types: [minor, patch]
@@ -14,6 +18,10 @@ updates:
     groups:
       npm-minor:
         update-types: [minor, patch]
+    ignore:
+      # must match the Node runtime (22 LTS), not the newest Node
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -25,3 +33,10 @@ updates:
   - package-ecosystem: docker
     directories: [/backend, /frontend]
     schedule: { interval: weekly }
+    ignore:
+      # stay on LTS lines; odd Node majors are short-lived "current" releases
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      # move to a new Python minor deliberately, after LightGBM/SciPy ship wheels for it
+      - dependency-name: python
+        update-types: ["version-update:semver-minor"]

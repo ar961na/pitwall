@@ -4,8 +4,8 @@ import { api } from '../api/client'
 import type { CompareResponse, Driver } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { TrackMap } from '../components/TrackMap'
-import { Card, Empty, SeriesLegend, Status, TaskCallout } from '../components/ui'
-import { formatLapTime, MISSING, SERIES_DASH } from '../lib/format'
+import { Card, Empty, SeriesLegend, Status } from '../components/ui'
+import { cornerLabel, formatLapTime, MISSING, SERIES_DASH } from '../lib/format'
 import { useApi } from '../hooks/useApi'
 
 type Row = Record<string, number>
@@ -174,16 +174,23 @@ export function TelemetryPage() {
           </Card>
 
           <Card title="Corner by corner">
-            {data.corner_analysis ? (
+            {data.corners[0]?.source === 'detected' && (
+              <p className="muted">
+                No corner list is published for this circuit yet, so these are braking zones (B1, B2, …) found in the
+                speed trace. Flat-out corners are not included.
+              </p>
+            )}
+            {data.corner_analysis.length ? (
               <div className="table-wrap">
-                <CornerTable rows={data.corner_analysis} a={data.a.driver} b={data.b.driver} />
+                <CornerTable
+                  rows={data.corner_analysis}
+                  a={data.a.driver}
+                  b={data.b.driver}
+                  prefix={data.corners[0]?.source === 'detected' ? 'B' : ''}
+                />
               </div>
             ) : (
-              <TaskCallout task="TASK 1: corner analysis">
-                The backend replied: <code>{data.corner_analysis_status}</code>. Implement{' '}
-                <code>corner_analysis()</code> in <code>backend/src/pitwall/telemetry/corners.py</code> and this table
-                fills in.
-              </TaskCallout>
+              <Empty>No corners or braking zones were found on these laps.</Empty>
             )}
           </Card>
         </>
@@ -279,7 +286,7 @@ function Chart({
             key={`${c.number}${c.letter}`}
             x={c.distance}
             stroke="var(--chart-grid)"
-            label={{ value: `${c.number}${c.letter}`, position: 'insideTop', fill: 'var(--text-muted)', fontSize: 10 }}
+            label={{ value: cornerLabel(c), position: 'insideTop', fill: 'var(--text-muted)', fontSize: 10 }}
           />
         ))}
         {keys.map((k, i) => (
@@ -300,7 +307,17 @@ function Chart({
   )
 }
 
-function CornerTable({ rows, a, b }: { rows: Record<string, number | null>[]; a: string; b: string }) {
+function CornerTable({
+  rows,
+  a,
+  b,
+  prefix,
+}: {
+  rows: Record<string, number | null>[]
+  a: string
+  b: string
+  prefix: string
+}) {
   const f = (v: number | null | undefined, d = 0) => (v == null ? MISSING : v.toFixed(d))
   return (
     <table>
@@ -317,7 +334,10 @@ function CornerTable({ rows, a, b }: { rows: Record<string, number | null>[]; a:
       <tbody>
         {rows.map((r) => (
           <tr key={r.corner}>
-            <td>{r.corner}</td>
+            <td>
+              {prefix}
+              {r.corner}
+            </td>
             <td>{f(r.min_speed_a)}</td>
             <td>{f(r.min_speed_b)}</td>
             <td>{f(r.brake_point_a)}</td>

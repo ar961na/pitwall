@@ -26,6 +26,7 @@ from fastapi.testclient import TestClient
 
 from pitwall.api.main import app
 from pitwall.data import openf1
+from pitwall.predict import service
 
 log = logging.getLogger("static_demo")
 
@@ -36,6 +37,7 @@ FEATURED = [
     (2026, "monza", "Qualifying"),
     (2025, "zandvoort", "Race"),
 ]
+PREDICTED_FINISHED = 3
 OPTIMIZE_STOPS = (1, 2)
 OPTIMIZE_SIMS = 2000  # must match the UI's default "Simulations" value
 
@@ -156,6 +158,8 @@ def build(out: Path, keys: list[int] | None = None, this_year: int | None = None
     if defaults:
         _optimize(w, "defaults", defaults)
 
+    _predictions(w, this_year, offline=not keys)
+
     manifest = {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "sessions": sessions_meta,
@@ -165,6 +169,20 @@ def build(out: Path, keys: list[int] | None = None, this_year: int | None = None
     (out / "README.txt").write_text(LICENCE_NOTE.format(generated=manifest["generated_at"]))
     log.info("wrote %d files for %d sessions to %s", w.files, len(keys), out)
     return manifest
+
+
+def _predictions(w: Writer, year: int, offline: bool) -> None:
+    """Forecasts for the next round and the last PREDICTED_FINISHED finished ones, if a model exists."""
+    if offline or not service.MODEL_PATH.exists():
+        log.warning("no race predictor snapshot (offline build or no trained model)")
+        w.save(static_path(f"/predict/{year}"), [])
+        return
+    resp = w.client.get(f"/api/predict/{year}")
+    rounds = resp.json() if resp.status_code == 200 else []
+    finished = [r for r in rounds if r["state"] == "finished"][-PREDICTED_FINISHED:]
+    pending = [r for r in rounds if r["state"] != "finished"][:1]
+    kept = [r for r in finished + pending if w.get(f"/predict/{year}/{r['round']}")]
+    w.save(static_path(f"/predict/{year}"), kept)
 
 
 def _optimize(w: Writer, label: str, params: dict) -> None:

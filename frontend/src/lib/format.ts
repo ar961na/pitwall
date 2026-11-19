@@ -18,3 +18,8 @@ export function formatLapTime(s: number): string {
 
 /** Placeholder for missing values in tables. */
 export const MISSING = 'n/a'
+
+/** "4A" for a published corner, "B3" for a braking zone detected in the speed trace. */
+export function cornerLabel(c: { number: number; letter: string; source?: string }): string {
+  return c.source === 'detected' ? `B${c.number}` : `${c.number}${c.letter}`
+}

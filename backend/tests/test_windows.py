@@ -1,12 +1,8 @@
-"""TASK 6 acceptance tests. Run:  pytest -m task tests/tasks/test_task6_windows.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from pitwall.dl.stint_dataset import SEQ_FEATURES, make_windows
-
-pytestmark = pytest.mark.task
 
 
 @pytest.fixture

@@ -1,11 +1,7 @@
-"""TASK 2 acceptance tests. Run:  pytest -m task tests/tasks/test_task2_cliff.py"""
-
 import numpy as np
 import pytest
 
 from pitwall.models.tyre_deg import detect_cliff
-
-pytestmark = pytest.mark.task
 
 
 def stint(cliff_at, n=30, deg=0.05, cliff_rate=0.08, noise=0.08, seed=0):

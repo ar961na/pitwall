@@ -1,13 +1,8 @@
-"""TASK 4 acceptance tests. Run:  pytest -m task tests/tasks/test_task4_reactive.py"""
-
 import numpy as np
-import pytest
 
 from pitwall.strategy.params import RaceParams
 from pitwall.strategy.policies import simulate_reactive
 from pitwall.strategy.simulator import RaceScenarios, Stint, Strategy, simulate
-
-pytestmark = pytest.mark.task
 
 PLAN = Strategy((Stint("MEDIUM", 25), Stint("HARD", 32)))
 

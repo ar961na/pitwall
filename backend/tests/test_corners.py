@@ -1,5 +1,3 @@
-"""TASK 1 acceptance tests. Run:  pytest -m task tests/tasks/test_task1_corners.py"""
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,8 +5,6 @@ import pytest
 from pitwall.telemetry.compare import compare_laps
 from pitwall.telemetry.corners import corner_analysis
 from tests.conftest import corner_profile, make_lap_telemetry
-
-pytestmark = pytest.mark.task
 
 CORNERS = pd.DataFrame({"number": [1, 2], "distance": [1000.0, 3000.0]})
 
@@ -58,3 +54,21 @@ def test_no_braking_gives_nan():
     flat = make_lap_telemetry(lambda d: 250.0)
     out = corner_analysis(compare_laps(flat, flat), CORNERS)
     assert np.isnan(out["brake_point_a"]).all()
+
+
+def test_detect_corners_finds_braking_zones():
+    from pitwall.telemetry.corners import detect_corners
+
+    a = make_lap_telemetry(corner_profile([(1000, 100, 130), (3000, 150, 100)]), hz=10)
+    b = make_lap_telemetry(corner_profile([(1000, 110, 100), (3000, 150, 100)]), hz=10)
+    found = detect_corners(compare_laps(a, b, step_m=2.0))
+    assert list(found["number"]) == [1, 2]
+    assert (found["source"] == "detected").all()
+    assert np.allclose(found["distance"], [1000, 3000], atol=20)
+
+
+def test_detect_corners_ignores_flat_out_laps():
+    from pitwall.telemetry.corners import detect_corners
+
+    flat = make_lap_telemetry(lambda d: 300.0 - 5 * np.sin(d / 300))  # small wiggles, no braking
+    assert detect_corners(compare_laps(flat, flat)).empty

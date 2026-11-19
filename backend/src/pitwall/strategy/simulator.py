@@ -15,6 +15,7 @@ and its open implementation https://github.com/TUMFTM/race-simulation (we re-imp
 much simpler single-car version; no code copied); common random numbers [M18].
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Self
@@ -169,6 +170,7 @@ def optimize(
     shortlist: int = 20,
     n_sims: int = 2000,
     seed: int = 0,
+    simulator: Callable[[Strategy, RaceParams, RaceScenarios], SimResult] | None = None,
 ) -> list[dict]:
     """Two-stage search.
 
@@ -190,7 +192,8 @@ def optimize(
     )
 
     scenarios = RaceScenarios.sample(params, n_sims, seed)
-    results = [simulate(s, params, scenarios) for s in picked]
+    run = simulator or simulate  # e.g. policies.simulate_reactive
+    results = [run(s, params, scenarios) for s in picked]
     totals = np.stack([r.totals for r in results])  # (n_strategies, n_sims)
     p_best = np.bincount(totals.argmin(axis=0), minlength=len(results)) / n_sims
 

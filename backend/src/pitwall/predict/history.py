@@ -12,8 +12,8 @@ import pandas as pd
 from pitwall.data.http import CachedClient
 
 # Jolpica limits without a token: 4 req/s burst, 500 req/h (their docs/rate_limits.md).
-# 0.5 s spacing respects the burst limit; a season is about ten pages, far under 500/h.
-client = CachedClient("https://api.jolpi.ca/ergast/f1", "jolpica", min_interval_s=0.5)
+# In practice 0.5 s spacing still drew 429s (2026-11), so requests are 1 s apart.
+client = CachedClient("https://api.jolpi.ca/ergast/f1", "jolpica", min_interval_s=1.0)
 
 
 def _paged(path: str, table: str, year: int) -> list[dict]:
@@ -69,7 +69,12 @@ def season_qualifying(year: int) -> pd.DataFrame:
                 {
                     "year": year,
                     "round": int(race["round"]),
+                    "race_name": race["raceName"],
+                    "circuit_id": race["Circuit"]["circuitId"],
+                    "date": race["date"],
                     "driver_id": q["Driver"]["driverId"],
+                    "driver_code": q["Driver"].get("code"),
+                    "constructor_id": q["Constructor"]["constructorId"],
                     "quali_pos": int(q["position"]),
                     "q1_s": _time_s(q.get("Q1")),
                     "q2_s": _time_s(q.get("Q2")),
@@ -79,10 +84,37 @@ def season_qualifying(year: int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+QUALI_COLUMNS = ["quali_pos", "q1_s", "q2_s", "q3_s"]
+
+
+def season_schedule(year: int) -> pd.DataFrame:
+    """Calendar of a season: round, race_name, circuit_id, date."""
+    ttl = 6 * 3600 if year >= dt.date.today().year else None
+    races = client.get(f"{year}.json?limit=100", ttl_s=ttl)["MRData"]["RaceTable"]["Races"]
+    return pd.DataFrame(
+        [
+            {
+                "year": year,
+                "round": int(r["round"]),
+                "race_name": r["raceName"],
+                "circuit_id": r["Circuit"]["circuitId"],
+                "date": r["date"],
+            }
+            for r in races
+        ]
+    )
+
+
 def fetch_results(years: list[int]) -> pd.DataFrame:
     """Results joined with qualifying, one row per (year, round, driver), sorted in time."""
     res = pd.concat([season_results(y) for y in years], ignore_index=True)
     quali = pd.concat([season_qualifying(y) for y in years], ignore_index=True)
-    df = res.merge(quali, on=["year", "round", "driver_id"], how="left")
+    df = res
+    if not quali.empty:
+        keys = ["year", "round", "driver_id"]
+        df = res.merge(quali[[*keys, *QUALI_COLUMNS]], on=keys, how="left")
+    for col in QUALI_COLUMNS:
+        if col not in df:
+            df[col] = float("nan")
     df["date"] = pd.to_datetime(df["date"])
     return df.sort_values(["date", "position"]).reset_index(drop=True)

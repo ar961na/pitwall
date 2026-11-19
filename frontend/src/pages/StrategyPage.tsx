@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api/client'
+import { STATIC_DEMO } from '../api/static'
 import type { CompoundParams, OptimizeResponse, RaceParams } from '../api/types'
 import { SessionPicker } from '../components/SessionPicker'
 import { Card, CompoundChip, Empty, Status } from '../components/ui'
@@ -22,6 +23,8 @@ const RACE_FIELDS: [keyof RaceParams, string, number][] = [
   ['sc_pit_loss_factor', 'Pit loss under SC (×)', 0.05],
   ['lap_noise_s', 'Lap noise σ (s)', 0.05],
 ]
+const SOURCE_TEXT = { race: 'this race', pace_model: 'all races', default: 'default' } as const
+
 const COMPOUND_FIELDS: [keyof CompoundParams, string, number][] = [
   ['offset_s', 'Offset (s)', 0.05],
   ['deg_s_per_lap', 'Deg (s/lap)', 0.005],
@@ -39,6 +42,7 @@ export function StrategyPage() {
   const [calibrating, setCalibrating] = useState(false)
   const [maxStops, setMaxStops] = useState(2)
   const [nSims, setNSims] = useState(2000)
+  const [reactive, setReactive] = useState(false)
   const [result, setResult] = useState<OptimizeResponse | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string>()
@@ -63,7 +67,7 @@ export function StrategyPage() {
     setRunning(true)
     setError(undefined)
     try {
-      setResult(await api.optimize({ params, max_stops: maxStops, min_stint: 8, n_sims: nSims, seed: 0 }))
+      setResult(await api.optimize({ params, max_stops: maxStops, min_stint: 8, n_sims: nSims, seed: 0, reactive }))
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -99,7 +103,8 @@ export function StrategyPage() {
         </div>
         <p className="muted">
           Fits the linear degradation model on {raceLabel || 'the selected race'}'s green-flag laps and takes the
-          circuit's pit loss. Cliffs still come from defaults until TASK 2.
+          circuit's pit loss. Cliff ages are replaced where the race shows one in at least three stints. A compound the
+          race did not use, or whose fit makes no physical sense, takes its degradation from the multi-race pace model.
         </p>
       </section>
 
@@ -138,6 +143,9 @@ export function StrategyPage() {
                     <tr key={name}>
                       <td>
                         <CompoundChip compound={name} />
+                        {params.tyre_source && (
+                          <div className="muted small">{SOURCE_TEXT[params.tyre_source[name] ?? 'default']}</div>
+                        )}
                       </td>
                       {COMPOUND_FIELDS.map(([key, , step]) => (
                         <td key={key}>
@@ -176,6 +184,21 @@ export function StrategyPage() {
                 <option key={n}>{n}</option>
               ))}
             </select>
+          </label>
+          <label
+            title={
+              STATIC_DEMO
+                ? 'Needs the live simulator'
+                : 'Pit early when a safety car comes out within 6 laps before a planned stop'
+            }
+          >
+            <input
+              type="checkbox"
+              checked={reactive}
+              disabled={STATIC_DEMO}
+              onChange={(e) => setReactive(e.target.checked)}
+            />
+            React to safety cars
           </label>
           <button onClick={run} disabled={!params || running}>
             {running ? 'Simulating…' : 'Find best strategy'}
@@ -216,6 +239,9 @@ function Results({ result }: { result: OptimizeResponse }) {
                   P10 to P90 vs best (s)
                 </th>
                 <th title="Share of simulated races where this strategy was the fastest">P(best)</th>
+                <th title="Mean time saved by pitting early when a safety car comes out within 6 laps before a planned stop">
+                  SC reaction (s)
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -238,6 +264,10 @@ function Results({ result }: { result: OptimizeResponse }) {
                       <div style={{ width: `${r.p_best * 100}%` }} />
                       <span>{(r.p_best * 100).toFixed(1)}%</span>
                     </div>
+                  </td>
+                  <td>
+                    {r.reactive_gain_s >= 0 ? '-' : '+'}
+                    {Math.abs(r.reactive_gain_s).toFixed(2)}
                   </td>
                 </tr>
               ))}

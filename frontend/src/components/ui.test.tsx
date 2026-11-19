@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { formatLapTime } from '../lib/format'
-import { CompoundChip, TaskCallout } from './ui'
+import { CompoundChip } from './ui'
 
 describe('formatLapTime', () => {
   it('formats seconds as m:ss.mmm', () => {
@@ -18,9 +18,10 @@ describe('CompoundChip', () => {
   })
 })
 
-describe('TaskCallout', () => {
-  it('renders the task name', () => {
-    render(<TaskCallout task="TASK 1">do it</TaskCallout>)
-    expect(screen.getByText(/TASK 1/)).toBeInTheDocument()
+describe('cornerLabel', () => {
+  it('labels published corners by number and letter, detected zones with B', async () => {
+    const { cornerLabel } = await import('../lib/format')
+    expect(cornerLabel({ number: 4, letter: 'A', source: 'published' })).toBe('4A')
+    expect(cornerLabel({ number: 3, letter: '', source: 'detected' })).toBe('B3')
   })
 })

@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
+import pytest
 
-from pitwall.models.tyre_deg import LinearDegradationModel
+from pitwall.models.tyre_deg import LinearDegradationModel, cliff_ages
 from pitwall.strategy.calibrate import params_from_degradation
 
 
@@ -57,3 +58,32 @@ def test_calibration_uses_fitted_values(rng):
     assert p.pit_loss_s == 21.0
     assert abs(p.compounds["SOFT"].deg_s_per_lap - truth["deg"]["SOFT"]) < 0.01
     assert abs(p.base_lap_time_s - (truth["driver"]["AAA"] + truth["lap_coef"])) < 0.1
+
+
+def test_cliff_ages_feed_calibration(rng):
+    laps, _ = synthetic_race(rng)
+    laps["stint"] = (laps["tyre_life"] == 1).groupby(laps["driver"]).cumsum()
+    hard = laps["compound"] == "HARD"
+    # every HARD stint falls off after 15 laps
+    laps.loc[hard, "lap_time_s"] += 0.08 * np.maximum(laps.loc[hard, "tyre_life"] - 15, 0) ** 1.5
+    m = LinearDegradationModel.fit(laps)
+    cliffs = cliff_ages(laps, m)
+    assert set(cliffs) == {"HARD"}
+    assert abs(cliffs["HARD"] - 15) <= 3
+    p = params_from_degradation(m, total_laps=50, cliffs=cliffs)
+    assert p.compounds["HARD"].cliff_age == cliffs["HARD"]
+    assert p.compounds["SOFT"].cliff_age == 16  # default kept when nothing was detected
+
+
+def test_pace_model_degradation_fills_gaps(rng):
+    laps, _ = synthetic_race(rng)
+    m = LinearDegradationModel.fit(laps[laps["compound"] != "SOFT"])  # SOFT not raced
+
+    p = params_from_degradation(m, total_laps=50, pace_deg={"SOFT": 0.07, "MEDIUM": 0.9})
+    assert p.tyre_source == {"SOFT": "pace_model", "MEDIUM": "race", "HARD": "race"}
+    assert p.compounds["SOFT"].deg_s_per_lap == pytest.approx(0.07)
+    assert p.compounds["MEDIUM"].deg_s_per_lap != pytest.approx(0.9)  # race fit wins when valid
+    assert p.compounds["SOFT"].offset_s == pytest.approx(-0.6)  # default offset kept
+
+    r = params_from_degradation(m, total_laps=50)
+    assert r.tyre_source["SOFT"] == "default"
